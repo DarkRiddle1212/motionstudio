@@ -2999,25 +2999,29 @@ router.post('/data/export', authenticateAdminToken, async (req: AuthenticatedReq
 router.get('/audit-logs', authenticateAdminToken, async (req: AuthenticatedRequest, res) => {
   // Redirect to the actual implementation
   req.url = '/security/audit-logs' + (req.url.includes('?') ? req.url.substring(req.url.indexOf('?')) : '');
-  return router.handle(req, res);
+  req.originalUrl = req.url;
+  return res.redirect(307, req.url);
 });
 
 router.post('/audit-logs/export', authenticateAdminToken, async (req: AuthenticatedRequest, res) => {
   // Redirect to the actual implementation  
   req.url = '/security/audit-logs/export';
-  return router.handle(req, res);
+  req.originalUrl = req.url;
+  return res.redirect(307, req.url);
 });
 
 router.get('/system/config', authenticateAdminToken, async (req: AuthenticatedRequest, res) => {
   // Redirect to the actual implementation
   req.url = '/settings/configs';
-  return router.handle(req, res);
+  req.originalUrl = req.url;
+  return res.redirect(307, req.url);
 });
 
 router.put('/system/config', authenticateAdminToken, async (req: AuthenticatedRequest, res) => {
   // Redirect to the actual implementation
   req.url = '/settings/configs';
-  return router.handle(req, res);
+  req.originalUrl = req.url;
+  return res.redirect(307, req.url);
 });
 
 // Alias routes for backward compatibility with tests

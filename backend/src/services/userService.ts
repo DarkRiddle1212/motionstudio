@@ -381,7 +381,7 @@ export class UserService {
       await this.emailService.sendEmail({
         to: user.email,
         subject: 'Account Suspended - Motion Design Studio',
-        html: this.generateSuspensionEmailTemplate(user.firstName),
+        html: this.generateSuspensionEmailTemplate(user.firstName || undefined),
         text: `Dear ${user.firstName || 'User'},
 
 Your Motion Design Studio account has been suspended by an administrator.
@@ -442,7 +442,7 @@ Motion Design Studio Team`
       await this.emailService.sendEmail({
         to: user.email,
         subject: 'Account Activated - Motion Design Studio',
-        html: this.generateActivationEmailTemplate(user.firstName),
+        html: this.generateActivationEmailTemplate(user.firstName || undefined),
         text: `Dear ${user.firstName || 'User'},
 
 Your Motion Design Studio account has been activated by an administrator.
