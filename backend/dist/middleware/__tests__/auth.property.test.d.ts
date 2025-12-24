@@ -1,0 +1,2 @@
+export {};
+//# sourceMappingURL=auth.property.test.d.ts.map
