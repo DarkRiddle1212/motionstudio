@@ -10,7 +10,10 @@
     },
     {
       "src": "backend/src/index.ts",
-      "use": "@vercel/node"
+      "use": "@vercel/node",
+      "config": {
+        "maxDuration": 30
+      }
     }
   ],
   "routes": [
@@ -23,14 +26,6 @@
       "dest": "frontend/dist/$1"
     }
   ],
-  "env": {
-    "NODE_ENV": "production"
-  },
-  "functions": {
-    "backend/src/index.ts": {
-      "maxDuration": 30
-    }
-  },
   "buildCommand": "npm run build",
   "outputDirectory": "frontend/dist"
 }
