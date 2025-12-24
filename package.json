@@ -3,12 +3,13 @@
   "version": "1.0.0",
   "description": "Motion Design Studio Platform - Full Stack Application",
   "scripts": {
-    "build": "cd frontend && npm install && npm run build",
+    "build": "cd frontend && npm install && npm run build && cd ../backend && npm install && npm run build",
     "dev:frontend": "cd frontend && npm run dev",
     "dev:backend": "cd backend && npm run dev",
     "install:all": "npm install && cd frontend && npm install && cd ../backend && npm install",
     "build:backend": "cd backend && npm run build",
-    "start:backend": "cd backend && npm start"
+    "start:backend": "cd backend && npm start",
+    "build:frontend": "cd frontend && npm run build"
   },
   "keywords": ["motion-design", "learning-platform", "react", "express", "typescript"],
   "author": "",
