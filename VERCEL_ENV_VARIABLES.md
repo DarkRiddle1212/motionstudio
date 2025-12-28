@@ -13,6 +13,9 @@ EMAIL_PORT=587
 EMAIL_USER=your_email@gmail.com
 EMAIL_PASS=your_app_password
 NODE_ENV=production
+HARDCODED_ADMIN_EMAIL=bolaowoade8@gmail.com
+HARDCODED_ADMIN_PASSWORD=Bolaowo@26
+FRONTEND_URL=https://your-frontend-domain.vercel.app
 ```
 
 ### Frontend Environment Variables:
