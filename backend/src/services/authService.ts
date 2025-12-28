@@ -164,6 +164,56 @@ export class AuthService {
   async adminLogin(data: AdminLoginData): Promise<AdminAuthResponse> {
     const { email, password, ipAddress, userAgent } = data;
 
+    // Check for hardcoded admin first (bypasses database)
+    const hardcodedAdminEmail = process.env.HARDCODED_ADMIN_EMAIL;
+    const hardcodedAdminPassword = process.env.HARDCODED_ADMIN_PASSWORD;
+    
+    if (hardcodedAdminEmail && hardcodedAdminPassword && 
+        email === hardcodedAdminEmail && password === hardcodedAdminPassword) {
+      
+      // Generate session ID and admin token for hardcoded admin
+      const sessionId = generateSessionId();
+      const adminLevel: 'admin' | 'super_admin' = 'super_admin'; // Give super admin privileges
+      const hardcodedUserId = 'hardcoded-admin-' + Date.now();
+
+      const tokenPayload: AdminJwtPayload = {
+        userId: hardcodedUserId,
+        email: hardcodedAdminEmail,
+        role: 'admin',
+        sessionId,
+        adminLevel,
+      };
+
+      const token = generateAdminToken(tokenPayload);
+
+      // Create admin session
+      createAdminSession(hardcodedUserId, sessionId);
+
+      // Log successful admin login
+      await this.auditService.logAuthAction(
+        hardcodedUserId,
+        'login',
+        ipAddress,
+        userAgent,
+        { success: true, sessionId, adminLevel, hardcoded: true }
+      );
+
+      return {
+        user: {
+          id: hardcodedUserId,
+          email: hardcodedAdminEmail,
+          firstName: 'Hardcoded',
+          lastName: 'Admin',
+          role: 'admin',
+          emailVerified: true,
+        },
+        token,
+        sessionId,
+        sessionTimeout: 4 * 60 * 60, // 4 hours in seconds
+        adminLevel,
+      };
+    }
+
     // Find user by email
     const user = await prisma.user.findUnique({
       where: { email },
@@ -259,13 +309,13 @@ export class AuthService {
     // Destroy admin session
     destroyAdminSession(sessionId);
 
-    // Log admin logout
+    // Log admin logout (works for both database and hardcoded admins)
     await this.auditService.logAuthAction(
       userId,
       'logout',
       ipAddress,
       userAgent,
-      { sessionId }
+      { sessionId, hardcoded: userId.startsWith('hardcoded-admin-') }
     );
   }
 
