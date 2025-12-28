@@ -6,7 +6,7 @@ async function testHardcodedAdmin() {
     
     const response = await axios.post('http://localhost:5000/api/admin/login', {
       email: 'bolaowoade8@gmail.com',
-      password: 'bolaowo26'
+      password: 'Bolaowo@26'
     });
     
     console.log('✅ Hardcoded admin login successful!');
