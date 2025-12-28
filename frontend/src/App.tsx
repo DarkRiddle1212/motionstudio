@@ -8,6 +8,7 @@ import { useMemoryMonitor } from './hooks/usePerformance'
 // Lazy load components for code splitting
 const SignUp = lazy(() => import('./components/Pages/Auth').then(module => ({ default: module.SignUp })))
 const Login = lazy(() => import('./components/Pages/Auth').then(module => ({ default: module.Login })))
+const AdminLogin = lazy(() => import('./components/Pages/Auth/AdminLogin'))
 const VerifyEmail = lazy(() => import('./components/Pages/Auth').then(module => ({ default: module.VerifyEmail })))
 
 // Admin components
@@ -83,6 +84,7 @@ function App() {
               <Route path="/modern-ui" element={<ModernUIDemo />} />
               <Route path="/test-tailwind" element={<TailwindTest />} />
               <Route path="/login" element={<Login />} />
+              <Route path="/admin/login" element={<AdminLogin />} />
               <Route path="/signup" element={<SignUp />} />
               <Route path="/verify-email" element={<VerifyEmail />} />
               <Route path="/courses" element={<CoursesPage />} />

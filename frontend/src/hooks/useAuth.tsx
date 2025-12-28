@@ -17,6 +17,7 @@ interface AuthContextType {
   token: string | null;
   loading: boolean;
   login: (email: string, password: string) => Promise<User>;
+  adminLogin: (email: string, password: string) => Promise<User>;
   signup: (email: string, password: string, firstName?: string, lastName?: string) => Promise<void>;
   logout: () => void;
   verifyEmail: (token: string) => Promise<void>;
@@ -72,6 +73,32 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
+  const adminLogin = async (email: string, password: string) => {
+    try {
+      const response = await axios.post(`${API_URL}/admin/login`, {
+        email,
+        password,
+      });
+
+      const { user: userData, token: authToken } = response.data;
+
+      setUser(userData);
+      setToken(authToken);
+
+      // Store in localStorage
+      localStorage.setItem('token', authToken);
+      localStorage.setItem('user', JSON.stringify(userData));
+
+      // Set axios default header
+      axios.defaults.headers.common['Authorization'] = `Bearer ${authToken}`;
+      
+      // Return user data so login component can use it for routing
+      return userData;
+    } catch (error: any) {
+      throw new Error(error.response?.data?.error || 'Admin login failed');
+    }
+  };
+
   const signup = async (
     email: string,
     password: string,
@@ -120,6 +147,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     token,
     loading,
     login,
+    adminLogin,
     signup,
     logout,
     verifyEmail,
