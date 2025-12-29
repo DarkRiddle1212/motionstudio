@@ -21,7 +21,7 @@ interface FooterLinkProps {
 }
 
 const FooterLink = ({ to, children, external }: FooterLinkProps) => {
-  const linkClasses = "text-white/70 hover:text-brand-accent transition-colors duration-300 text-body-sm";
+  const linkClasses = "text-brand-secondary-text hover:text-brand-accent transition-colors duration-300 text-body-sm";
   
   if (external) {
     return (
@@ -55,7 +55,7 @@ const SocialIcon = ({ href, label, children }: SocialIconProps) => (
     target="_blank"
     rel="noopener noreferrer"
     aria-label={label}
-    className="w-10 h-10 flex items-center justify-center rounded-full bg-white/10 text-white/70 hover:bg-brand-accent hover:text-white transition-all duration-300"
+    className="w-10 h-10 flex items-center justify-center rounded-full bg-brand-secondary-bg text-brand-secondary-text hover:bg-brand-accent hover:text-brand-primary-bg transition-all duration-300"
     whileHover={{ scale: 1.1, y: -2 }}
     whileTap={{ scale: 0.95 }}
   >
@@ -86,12 +86,12 @@ const Footer = () => {
 
   return (
     <footer 
-      className="bg-brand-primary-text text-white relative overflow-hidden"
+      className="bg-brand-primary-bg text-white relative overflow-hidden"
       data-testid="footer"
     >
       {/* Subtle gradient overlay */}
       <div 
-        className="absolute inset-0 bg-gradient-to-b from-transparent via-brand-accent/5 to-transparent pointer-events-none" 
+        className="absolute inset-0 bg-gradient-to-b from-brand-secondary-bg/20 via-brand-accent/5 to-brand-secondary-bg/20 pointer-events-none" 
         aria-hidden="true"
       />
       
@@ -104,12 +104,12 @@ const Footer = () => {
           {/* Brand Column */}
           <div className="lg:col-span-1">
             <Link to="/" className="inline-block mb-6">
-              <h3 className="text-2xl font-serif font-bold text-white">
+              <h3 className="text-2xl font-serif font-bold text-brand-title-text">
                 Motion Design
                 <span className="block text-brand-accent">Studio</span>
               </h3>
             </Link>
-            <p className="text-white/60 text-body-sm leading-relaxed mb-6 max-w-xs">
+            <p className="text-brand-secondary-text text-body-sm leading-relaxed mb-6 max-w-xs">
               Creating purposeful motion design that captivates audiences and elevates brands. 
               Learn from industry experts or hire us for your next project.
             </p>
@@ -141,7 +141,7 @@ const Footer = () => {
 
           {/* Studio Links */}
           <div>
-            <h4 className="text-white font-semibold text-heading-sm mb-6">Studio</h4>
+            <h4 className="text-brand-title-text font-semibold text-heading-sm mb-6">Studio</h4>
             <ul className="space-y-4">
               {footerLinks.studio.map((link) => (
                 <li key={link.to}>
@@ -153,7 +153,7 @@ const Footer = () => {
 
           {/* Education Links */}
           <div>
-            <h4 className="text-white font-semibold text-heading-sm mb-6">Education</h4>
+            <h4 className="text-brand-title-text font-semibold text-heading-sm mb-6">Education</h4>
             <ul className="space-y-4">
               {footerLinks.education.map((link) => (
                 <li key={link.to}>
@@ -165,7 +165,7 @@ const Footer = () => {
 
           {/* Resources Links */}
           <div>
-            <h4 className="text-white font-semibold text-heading-sm mb-6">Resources</h4>
+            <h4 className="text-brand-title-text font-semibold text-heading-sm mb-6">Resources</h4>
             <ul className="space-y-4">
               {footerLinks.resources.map((link) => (
                 <li key={link.to}>
@@ -177,9 +177,9 @@ const Footer = () => {
         </div>
 
         {/* Bottom Bar */}
-        <div className="pt-8 border-t border-white/10">
+        <div className="pt-8 border-t border-brand-secondary-text/20">
           <div className="flex flex-col md:flex-row justify-between items-center gap-4">
-            <p className="text-white/50 text-body-sm">
+            <p className="text-brand-secondary-text text-body-sm">
               © {currentYear} Motion Design Studio. All rights reserved.
             </p>
             <div className="flex gap-6">
