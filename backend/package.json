@@ -9,15 +9,17 @@
   },
   "scripts": {
     "dev": "ts-node src/index.ts",
-    "build": "prisma generate && tsc",
+    "build": "npx prisma generate && tsc",
     "start": "node dist/index.js",
+    "deploy": "npx prisma migrate deploy && npm start",
     "test": "jest",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
     "prisma:studio": "prisma studio",
-    "postinstall": "npx prisma generate"
+    "postinstall": "npx prisma generate",
+    "railway:build": "npx prisma generate && npm run build"
   },
   "keywords": [],
   "author": "",

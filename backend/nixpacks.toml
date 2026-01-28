@@ -1,11 +1,11 @@
 [phases.setup]
-nixPkgs = ['nodejs-18_x', 'npm-9_x']
+nixPkgs = ['nodejs-18_x']
 
 [phases.install]
-cmds = ['npm ci']
+cmds = ['npm ci --only=production', 'npm install --save-dev prisma @types/node typescript ts-node']
 
 [phases.build]
-cmds = ['npm run build', 'npx prisma generate']
+cmds = ['npx prisma generate', 'npm run build']
 
 [start]
 cmd = 'npm start'

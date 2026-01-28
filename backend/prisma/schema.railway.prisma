@@ -1,0 +1,274 @@
+// Railway Production Prisma Schema with PostgreSQL
+// Use this for Railway deployment
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                           String    @id @default(cuid())
+  email                        String    @unique
+  password                     String
+  firstName                    String?
+  lastName                     String?
+  role                         String    @default("student") // student, instructor, admin
+  emailVerified                Boolean   @default(false)
+  emailVerificationToken       String?
+  emailVerificationTokenExpiry DateTime?
+  createdAt                    DateTime  @default(now())
+  updatedAt                    DateTime  @updatedAt
+
+  // Relations
+  enrollments                  Enrollment[]
+  submissions                  Submission[]
+  instructorCourses            Course[]    @relation("InstructorCourses")
+  feedback                     Feedback[]
+  payments                     Payment[]
+  lessonCompletions            LessonCompletion[]
+  scholarships                 Scholarship[]
+
+  @@map("users")
+}
+
+model Course {
+  id              String   @id @default(cuid())
+  title           String
+  description     String
+  instructorId    String
+  instructor      User     @relation("InstructorCourses", fields: [instructorId], references: [id], onDelete: Cascade)
+  duration        String
+  pricing         Float    @default(0)
+  currency        String   @default("USD")
+  curriculum      String
+  introVideoUrl   String?
+  thumbnailUrl    String?
+  isPublished     Boolean  @default(false)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  // Relations
+  enrollments     Enrollment[]
+  lessons         Lesson[]
+  assignments     Assignment[]
+  payments        Payment[]
+  scholarships    Scholarship[]
+
+  @@map("courses")
+}
+
+model Enrollment {
+  id                 String   @id @default(cuid())
+  studentId          String
+  student            User     @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  courseId           String
+  course             Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  enrolledAt         DateTime @default(now())
+  progressPercentage Float    @default(0)
+  status             String   @default("active") // active, completed, dropped
+  completedAt        DateTime?
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  // Unique constraint to prevent duplicate enrollments
+  @@unique([studentId, courseId])
+  @@map("enrollments")
+}
+
+model Lesson {
+  id           String   @id @default(cuid())
+  courseId     String
+  course       Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  title        String
+  description  String
+  content      String
+  videoUrl     String?
+  fileUrls     String   @default("[]")
+  order        Int
+  isPublished  Boolean  @default(false)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  // Relations
+  completions  LessonCompletion[]
+
+  @@map("lessons")
+}
+
+model LessonCompletion {
+  id          String   @id @default(cuid())
+  studentId   String
+  student     User     @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  lessonId    String
+  lesson      Lesson   @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  completedAt DateTime @default(now())
+  createdAt   DateTime @default(now())
+
+  // Unique constraint to prevent duplicate completions
+  @@unique([studentId, lessonId])
+  @@map("lesson_completions")
+}
+
+model Assignment {
+  id             String   @id @default(cuid())
+  courseId       String
+  course         Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  title          String
+  description    String
+  submissionType String   // file, link
+  deadline       DateTime
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  // Relations
+  submissions    Submission[]
+
+  @@map("assignments")
+}
+
+model Submission {
+  id             String   @id @default(cuid())
+  assignmentId   String
+  assignment     Assignment @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
+  studentId      String
+  student        User     @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  submissionType String   // file, link
+  fileUrl        String?
+  linkUrl        String?
+  submittedAt    DateTime @default(now())
+  status         String   @default("pending") // pending, submitted, late, reviewed
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  // Relations
+  feedback       Feedback[]
+
+  @@map("submissions")
+}
+
+model Feedback {
+  id           String   @id @default(cuid())
+  submissionId String
+  submission   Submission @relation(fields: [submissionId], references: [id], onDelete: Cascade)
+  instructorId String
+  instructor   User     @relation(fields: [instructorId], references: [id], onDelete: Cascade)
+  comment      String
+  rating       Int?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@map("feedback")
+}
+
+model Payment {
+  id              String   @id @default(cuid())
+  studentId       String
+  student         User     @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  courseId        String
+  course          Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  amount          Float
+  currency        String   @default("USD")
+  status          String   @default("pending") // pending, completed, failed, refunded
+  paymentProvider String   // stripe, paystack
+  transactionId   String
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@map("payments")
+}
+
+model Project {
+  id              String   @id @default(cuid())
+  title           String
+  description     String
+  goal            String
+  solution        String
+  motionBreakdown String
+  toolsUsed       String
+  thumbnailUrl    String
+  caseStudyUrl    String
+  order           Int
+  isPublished     Boolean  @default(false)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@map("projects")
+}
+
+model Scholarship {
+  id                 String    @id @default(cuid())
+  studentId          String
+  student            User      @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  courseId           String
+  course             Course    @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  discountPercentage Float     // 0-100, where 100 = full scholarship
+  reason             String
+  grantedById        String
+  grantedAt          DateTime  @default(now())
+  expiresAt          DateTime?
+  status             String    @default("active") // active, expired, revoked
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+
+  @@unique([studentId, courseId])
+  @@map("scholarships")
+}
+
+model AuditLog {
+  id           String   @id @default(cuid())
+  adminId      String
+  action       String
+  resourceType String
+  resourceId   String
+  changes      String   // JSON string of changes
+  ipAddress    String?
+  userAgent    String?
+  timestamp    DateTime @default(now())
+  createdAt    DateTime @default(now())
+
+  @@map("audit_logs")
+}
+
+model SystemConfig {
+  id          String   @id @default(cuid())
+  category    String   // email, payment, features, general
+  key         String   @unique
+  value       String   // JSON string of value
+  description String
+  updatedBy   String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("system_configs")
+}
+
+model EmailTemplate {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  subject     String
+  htmlContent String
+  textContent String
+  variables   String   // JSON array of variable names
+  category    String   // auth, course, payment, notification
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("email_templates")
+}
+
+model ConfigBackup {
+  id          String   @id @default(cuid())
+  configId    String
+  configKey   String
+  previousValue String
+  newValue    String
+  changedBy   String
+  createdAt   DateTime @default(now())
+
+  @@map("config_backups")
+}
