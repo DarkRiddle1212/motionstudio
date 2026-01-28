@@ -9,6 +9,8 @@ node_modules/
 # Production
 /build
 /dist
+frontend/dist/
+backend/dist/
 
 # Misc
 .DS_Store
@@ -31,6 +33,10 @@ yarn-error.log*
 
 # Prisma
 prisma/migrations/
+*.db
+*.db-journal
 
 # Vite
 .vite/
+.vercel
+.env*.local

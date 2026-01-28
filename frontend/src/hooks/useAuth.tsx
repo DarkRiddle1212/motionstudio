@@ -75,10 +75,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const adminLogin = async (email: string, password: string) => {
     try {
+      console.log('Admin login attempt:', { email, API_URL });
+      console.log('Making request to:', `${API_URL}/admin/login`);
+      
       const response = await axios.post(`${API_URL}/admin/login`, {
         email,
         password,
       });
+
+      console.log('Admin login response:', response.data);
 
       const { user: userData, token: authToken } = response.data;
 
@@ -95,6 +100,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       // Return user data so login component can use it for routing
       return userData;
     } catch (error: any) {
+      console.error('Admin login error:', error);
+      console.error('Error response:', error.response?.data);
       throw new Error(error.response?.data?.error || 'Admin login failed');
     }
   };

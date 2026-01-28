@@ -11,26 +11,27 @@
    CSS CUSTOM PROPERTIES (DESIGN TOKENS)
    ============================================ */
 :root {
-  /* Modern Professional Brand Colors */
-  --color-primary-bg: #0F0F23;
-  --color-secondary-bg: #1A1A2E;
-  --color-tertiary-bg: #16213E;
-  --color-surface-bg: #0E1428;
-  --color-primary-text: #FFFFFF;
-  --color-secondary-text: #B8BCC8;
-  --color-muted-text: #6B7280;
-  --color-accent: #6366F1;
-  --color-accent-light: #818CF8;
-  --color-accent-dark: #4F46E5;
-  --color-success: #10B981;
-  --color-warning: #F59E0B;
-  --color-error: #EF4444;
+  /* Dark Mode Brand Palette */
+  --color-primary-bg: #000000;        /* Pure Black - main sections */
+  --color-secondary-bg: #1A1A1D;      /* Charcoal Gray - containers/cards */
+  --color-tertiary-bg: #2A2A2D;       /* Slightly lighter for elevation */
+  --color-surface-bg: #1A1A1D;        /* Same as secondary background */
+  --color-primary-text: #D6D6D8;      /* Light gray - body text */
+  --color-secondary-text: #8A8A8E;    /* Supporting UI gray - borders, subtle lines */
+  --color-title-text: #FFFFFF;        /* White - titles or strong hierarchy only */
+  --color-muted-text: #8A8A8E;        /* Supporting UI gray */
+  --color-accent: #F6C1CC;            /* Soft blush pink - CTAs, highlights, progress bars */
+  --color-accent-light: #F8D1D8;      /* Lighter pink for hover states */
+  --color-accent-dark: #C89AA6;       /* Dusty pink - hover effects, pill tags, subtle UI */
+  --color-success: #10B981;           /* Emerald */
+  --color-warning: #F59E0B;           /* Amber */
+  --color-error: #EF4444;             /* Red */
   
   /* Surface Colors */
-  --color-surface: #1A1A2E;
-  --color-surface-elevated: #16213E;
-  --color-surface-card: #0E1428;
-  --color-surface-overlay: rgba(15, 15, 35, 0.9);
+  --color-surface: #1A1A1D;           /* Charcoal Gray */
+  --color-surface-elevated: #2A2A2D;  /* Slightly lighter for elevation */
+  --color-surface-card: #1A1A1D;      /* Same as secondary background */
+  --color-surface-overlay: rgba(0, 0, 0, 0.8); /* Black overlay */
   
   /* Typography */
   --font-serif: 'Playfair Display', Georgia, serif;
@@ -80,19 +81,19 @@
   --space-48: 12rem;
   
   /* Shadows - Updated for new color scheme */
-  --shadow-subtle: 0 1px 2px 0 rgba(15, 15, 35, 0.4);
-  --shadow-sm: 0 1px 3px 0 rgba(15, 15, 35, 0.5), 0 1px 2px -1px rgba(15, 15, 35, 0.5);
-  --shadow-md: 0 4px 6px -1px rgba(15, 15, 35, 0.5), 0 2px 4px -2px rgba(15, 15, 35, 0.5);
-  --shadow-lg: 0 10px 15px -3px rgba(15, 15, 35, 0.5), 0 4px 6px -4px rgba(15, 15, 35, 0.5);
-  --shadow-xl: 0 20px 25px -5px rgba(15, 15, 35, 0.5), 0 8px 10px -6px rgba(15, 15, 35, 0.5);
-  --shadow-2xl: 0 25px 50px -12px rgba(15, 15, 35, 0.7);
-  --shadow-premium: 0 4px 6px -1px rgba(99, 102, 241, 0.3), 0 10px 20px -3px rgba(15, 15, 35, 0.4), 0 20px 40px -4px rgba(15, 15, 35, 0.3);
-  --shadow-card: 0 2px 4px rgba(15, 15, 35, 0.3), 0 8px 16px rgba(15, 15, 35, 0.4);
-  --shadow-card-hover: 0 4px 8px rgba(15, 15, 35, 0.4), 0 16px 32px rgba(15, 15, 35, 0.5);
-  --shadow-button: 0 2px 4px rgba(15, 15, 35, 0.4), 0 4px 8px rgba(15, 15, 35, 0.3);
-  --shadow-button-hover: 0 4px 8px rgba(15, 15, 35, 0.5), 0 8px 16px rgba(15, 15, 35, 0.4);
-  --shadow-glow: 0 0 20px rgba(99, 102, 241, 0.4);
-  --shadow-glow-lg: 0 0 40px rgba(99, 102, 241, 0.5);
+  --shadow-subtle: 0 1px 2px 0 rgba(0, 0, 0, 0.4);
+  --shadow-sm: 0 1px 3px 0 rgba(0, 0, 0, 0.5), 0 1px 2px -1px rgba(0, 0, 0, 0.5);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.5), 0 2px 4px -2px rgba(0, 0, 0, 0.5);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.5), 0 4px 6px -4px rgba(0, 0, 0, 0.5);
+  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.5), 0 8px 10px -6px rgba(0, 0, 0, 0.5);
+  --shadow-2xl: 0 25px 50px -12px rgba(0, 0, 0, 0.7);
+  --shadow-premium: 0 4px 6px -1px rgba(246, 193, 204, 0.3), 0 10px 20px -3px rgba(0, 0, 0, 0.4), 0 20px 40px -4px rgba(0, 0, 0, 0.3);
+  --shadow-card: 0 2px 4px rgba(0, 0, 0, 0.3), 0 8px 16px rgba(0, 0, 0, 0.4);
+  --shadow-card-hover: 0 4px 8px rgba(0, 0, 0, 0.4), 0 16px 32px rgba(0, 0, 0, 0.5);
+  --shadow-button: 0 2px 4px rgba(0, 0, 0, 0.4), 0 4px 8px rgba(0, 0, 0, 0.3);
+  --shadow-button-hover: 0 4px 8px rgba(0, 0, 0, 0.5), 0 8px 16px rgba(0, 0, 0, 0.4);
+  --shadow-glow: 0 0 20px rgba(246, 193, 204, 0.4);
+  --shadow-glow-lg: 0 0 40px rgba(246, 193, 204, 0.5);
   
   /* Border Radius */
   --radius-sm: 0.25rem;
@@ -316,11 +317,11 @@ h1, h2, h3, h4, h5, h6 {
   }
   
   .bg-gradient-accent-soft {
-    background: linear-gradient(135deg, rgba(99, 102, 241, 0.15) 0%, rgba(79, 70, 229, 0.08) 100%);
+    background: linear-gradient(135deg, rgba(246, 193, 204, 0.15) 0%, rgba(200, 154, 166, 0.08) 100%);
   }
   
   .bg-gradient-accent-glow {
-    background: radial-gradient(ellipse at center, rgba(99, 102, 241, 0.2) 0%, transparent 70%);
+    background: radial-gradient(ellipse at center, rgba(246, 193, 204, 0.2) 0%, transparent 70%);
   }
   
   /* Hero Section Gradients - Modern Professional */
@@ -333,8 +334,8 @@ h1, h2, h3, h4, h5, h6 {
   }
   
   .bg-gradient-hero-radial {
-    background: radial-gradient(ellipse at 30% 20%, rgba(99, 102, 241, 0.12) 0%, transparent 50%),
-                radial-gradient(ellipse at 70% 80%, rgba(99, 102, 241, 0.08) 0%, transparent 50%),
+    background: radial-gradient(ellipse at 30% 20%, rgba(246, 193, 204, 0.12) 0%, transparent 50%),
+                radial-gradient(ellipse at 70% 80%, rgba(246, 193, 204, 0.08) 0%, transparent 50%),
                 linear-gradient(180deg, var(--color-primary-bg) 0%, var(--color-secondary-bg) 100%);
   }
   
@@ -364,14 +365,14 @@ h1, h2, h3, h4, h5, h6 {
     background: linear-gradient(180deg, rgba(15, 15, 35, 0.4) 0%, rgba(15, 15, 35, 0.8) 100%);
   }
   
-  /* Mesh Gradients (Premium Effect) - Modern Professional */
+  /* Mesh Gradients (Premium Effect) - Dark Mode Brand */
   .bg-gradient-mesh {
     background: 
-      radial-gradient(at 40% 20%, rgba(99, 102, 241, 0.15) 0px, transparent 50%),
-      radial-gradient(at 80% 0%, rgba(99, 102, 241, 0.08) 0px, transparent 50%),
-      radial-gradient(at 0% 50%, rgba(22, 33, 62, 0.8) 0px, transparent 50%),
-      radial-gradient(at 80% 50%, rgba(99, 102, 241, 0.12) 0px, transparent 50%),
-      radial-gradient(at 0% 100%, rgba(22, 33, 62, 0.6) 0px, transparent 50%),
+      radial-gradient(at 40% 20%, rgba(246, 193, 204, 0.15) 0px, transparent 50%),
+      radial-gradient(at 80% 0%, rgba(246, 193, 204, 0.08) 0px, transparent 50%),
+      radial-gradient(at 0% 50%, rgba(26, 26, 29, 0.8) 0px, transparent 50%),
+      radial-gradient(at 80% 50%, rgba(246, 193, 204, 0.12) 0px, transparent 50%),
+      radial-gradient(at 0% 100%, rgba(26, 26, 29, 0.6) 0px, transparent 50%),
       var(--color-primary-bg);
   }
   
@@ -483,7 +484,7 @@ h1, h2, h3, h4, h5, h6 {
   [role="button"]:focus-visible {
     outline: var(--focus-ring-width) solid var(--focus-ring-color);
     outline-offset: var(--focus-ring-offset);
-    box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.2);
+    box-shadow: 0 0 0 4px rgba(246, 193, 204, 0.2);
   }
   
   /* Link focus styles */
@@ -499,7 +500,7 @@ h1, h2, h3, h4, h5, h6 {
   select:focus-visible {
     outline: none;
     border-color: var(--color-accent);
-    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
+    box-shadow: 0 0 0 3px rgba(246, 193, 204, 0.15);
   }
   
   /* Checkbox and radio focus styles */
@@ -525,7 +526,7 @@ h1, h2, h3, h4, h5, h6 {
   /* Focus ring variants */
   .focus-ring-accent:focus-visible {
     outline-color: var(--color-accent);
-    box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.2);
+    box-shadow: 0 0 0 4px rgba(246, 193, 204, 0.2);
   }
   
   .focus-ring-white:focus-visible {
@@ -648,31 +649,31 @@ h1, h2, h3, h4, h5, h6 {
    ============================================ */
 @layer utilities {
   .glass {
-    background: rgba(26, 26, 46, 0.7);
+    background: rgba(26, 26, 29, 0.7);
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
-    border: 1px solid rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(138, 138, 142, 0.2);
   }
   
   .glass-light {
-    background: rgba(255, 255, 255, 0.08);
+    background: rgba(138, 138, 142, 0.08);
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
-    border: 1px solid rgba(255, 255, 255, 0.12);
+    border: 1px solid rgba(138, 138, 142, 0.12);
   }
   
   .glass-dark {
-    background: rgba(15, 15, 35, 0.7);
+    background: rgba(0, 0, 0, 0.7);
     backdrop-filter: blur(16px);
     -webkit-backdrop-filter: blur(16px);
-    border: 1px solid rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(138, 138, 142, 0.1);
   }
   
   .glass-accent {
-    background: rgba(99, 102, 241, 0.12);
+    background: rgba(246, 193, 204, 0.12);
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
-    border: 1px solid rgba(99, 102, 241, 0.2);
+    border: 1px solid rgba(246, 193, 204, 0.2);
   }
 }
 
@@ -681,15 +682,15 @@ h1, h2, h3, h4, h5, h6 {
    ============================================ */
 @layer utilities {
   .border-subtle {
-    border: 1px solid rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(138, 138, 142, 0.2);
   }
   
   .border-subtle-light {
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(138, 138, 142, 0.3);
   }
   
   .border-accent-subtle {
-    border: 1px solid rgba(99, 102, 241, 0.25);
+    border: 1px solid rgba(246, 193, 204, 0.25);
   }
   
   .border-gradient {
@@ -829,7 +830,7 @@ h1, h2, h3, h4, h5, h6 {
    SCROLLBAR STYLING
    ============================================ */
 @layer base {
-  /* Custom scrollbar for webkit browsers - Modern Professional */
+  /* Custom scrollbar for webkit browsers - Dark Mode Brand */
   ::-webkit-scrollbar {
     width: 6px;
     height: 6px;
@@ -863,12 +864,12 @@ h1, h2, h3, h4, h5, h6 {
    ============================================ */
 @layer base {
   ::selection {
-    background-color: rgba(99, 102, 241, 0.3);
+    background-color: rgba(246, 193, 204, 0.3);
     color: var(--color-primary-text);
   }
   
   ::-moz-selection {
-    background-color: rgba(99, 102, 241, 0.3);
+    background-color: rgba(246, 193, 204, 0.3);
     color: var(--color-primary-text);
   }
 }
@@ -1240,14 +1241,14 @@ h1, h2, h3, h4, h5, h6 {
   /* Modern Card Styles */
   .card-modern {
     background: var(--color-surface-card);
-    border: 1px solid rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(138, 138, 142, 0.2);
     border-radius: var(--radius-lg);
     box-shadow: var(--shadow-card);
     transition: all var(--duration-normal) var(--ease-premium);
   }
   
   .card-modern:hover {
-    border-color: rgba(99, 102, 241, 0.3);
+    border-color: rgba(246, 193, 204, 0.3);
     box-shadow: var(--shadow-card-hover), var(--shadow-glow);
     transform: translateY(-2px);
   }
@@ -1310,7 +1311,7 @@ h1, h2, h3, h4, h5, h6 {
   /* Modern Input Styles */
   .input-modern {
     background: var(--color-surface-card);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(138, 138, 142, 0.2);
     border-radius: var(--radius-md);
     padding: 0.75rem 1rem;
     color: var(--color-primary-text);
@@ -1321,7 +1322,7 @@ h1, h2, h3, h4, h5, h6 {
   .input-modern:focus {
     outline: none;
     border-color: var(--color-accent);
-    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+    box-shadow: 0 0 0 3px rgba(246, 193, 204, 0.1);
     background: var(--color-surface-elevated);
   }
   
@@ -1342,9 +1343,9 @@ h1, h2, h3, h4, h5, h6 {
   }
   
   .badge-accent {
-    background: rgba(99, 102, 241, 0.1);
+    background: rgba(246, 193, 204, 0.1);
     color: var(--color-accent-light);
-    border: 1px solid rgba(99, 102, 241, 0.2);
+    border: 1px solid rgba(246, 193, 204, 0.2);
   }
   
   .badge-success {
@@ -1355,9 +1356,9 @@ h1, h2, h3, h4, h5, h6 {
   
   /* Modern Navigation Styles */
   .nav-modern {
-    background: rgba(26, 26, 46, 0.8);
+    background: rgba(26, 26, 29, 0.8);
     backdrop-filter: blur(12px);
-    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    border-bottom: 1px solid rgba(138, 138, 142, 0.2);
   }
   
   .nav-link-modern {
@@ -1371,12 +1372,12 @@ h1, h2, h3, h4, h5, h6 {
   
   .nav-link-modern:hover {
     color: var(--color-primary-text);
-    background: rgba(255, 255, 255, 0.05);
+    background: rgba(138, 138, 142, 0.1);
   }
   
   .nav-link-modern.active {
     color: var(--color-accent);
-    background: rgba(99, 102, 241, 0.1);
+    background: rgba(246, 193, 204, 0.1);
   }
   
   .nav-link-modern.active::after {
@@ -1395,7 +1396,7 @@ h1, h2, h3, h4, h5, h6 {
   .spinner-modern {
     width: 20px;
     height: 20px;
-    border: 2px solid rgba(99, 102, 241, 0.2);
+    border: 2px solid rgba(246, 193, 204, 0.2);
     border-top: 2px solid var(--color-accent);
     border-radius: 50%;
     animation: spin 1s linear infinite;
@@ -1422,7 +1423,7 @@ h1, h2, h3, h4, h5, h6 {
     opacity: 0;
     visibility: hidden;
     transition: all var(--duration-normal) var(--ease-premium);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(138, 138, 142, 0.2);
     box-shadow: var(--shadow-lg);
     z-index: var(--z-tooltip);
   }
@@ -1464,7 +1465,7 @@ h1, h2, h3, h4, h5, h6 {
   /* Modern Divider */
   .divider-modern {
     height: 1px;
-    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+    background: linear-gradient(90deg, transparent, rgba(138, 138, 142, 0.3), transparent);
     margin: 2rem 0;
   }
   
@@ -1479,7 +1480,7 @@ h1, h2, h3, h4, h5, h6 {
     font-weight: 700;
     color: var(--color-primary-text);
     margin-bottom: 1rem;
-    background: linear-gradient(135deg, var(--color-primary-text) 0%, var(--color-accent-light) 100%);
+    background: linear-gradient(135deg, var(--color-title-text) 0%, var(--color-accent-light) 100%);
     background-clip: text;
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
@@ -1537,7 +1538,7 @@ h1, h2, h3, h4, h5, h6 {
   }
   
   .hover-glow-modern:hover {
-    box-shadow: 0 0 30px rgba(99, 102, 241, 0.3);
+    box-shadow: 0 0 30px rgba(246, 193, 204, 0.3);
     transform: translateY(-2px);
   }
   

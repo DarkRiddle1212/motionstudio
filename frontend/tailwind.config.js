@@ -7,28 +7,29 @@ export default {
   theme: {
     extend: {
       colors: {
-        // Modern Professional Color Palette
-        'primary-bg': '#0F0F23',
-        'secondary-bg': '#1A1A2E',
-        'primary-text': '#FFFFFF',
-        'secondary-text': '#B8BCC8',
-        'accent': '#6366F1',
+        // Dark Mode Brand Palette
+        'primary-bg': '#000000',        // Pure Black
+        'secondary-bg': '#1A1A1D',      // Charcoal Gray
+        'primary-text': '#D6D6D8',      // Light gray for readability
+        'secondary-text': '#8A8A8E',    // Supporting UI gray
+        'accent': '#F6C1CC',            // Primary accent (soft blush pink)
+        'accent-secondary': '#C89AA6',  // Secondary accent (dusty pink)
+        
         brand: {
-          'primary-bg': '#0F0F23',      // Deep navy
-          'secondary-bg': '#1A1A2E',    // Darker navy
-          'tertiary-bg': '#16213E',     // Medium navy
-          'surface-bg': '#0E1428',      // Card background
-          'primary-text': '#FFFFFF',    // Pure white
-          'secondary-text': '#B8BCC8',  // Light gray
-          'muted-text': '#6B7280',      // Medium gray
-          'accent': '#6366F1',          // Modern indigo
-          'accent-light': '#818CF8',    // Light indigo
-          'accent-dark': '#4F46E5',     // Dark indigo
+          'primary-bg': '#000000',      // Pure Black - main sections
+          'secondary-bg': '#1A1A1D',    // Charcoal Gray - containers/cards
+          'primary-text': '#D6D6D8',    // Light gray - body text
+          'secondary-text': '#8A8A8E',  // Supporting UI gray - borders, subtle lines
+          'title-text': '#FFFFFF',      // White - titles or strong hierarchy only
+          'accent': '#F6C1CC',          // Soft blush pink - CTAs, highlights, progress bars
+          'accent-secondary': '#C89AA6', // Dusty pink - hover effects, pill tags, subtle UI
+          'accent-hover': '#F8D1D8',    // Lighter pink for hover states
           'success': '#10B981',         // Emerald
           'warning': '#F59E0B',         // Amber
           'error': '#EF4444',           // Red
         },
-        // Admin-specific colors
+        
+        // Admin panel colors (keeping light theme for admin)
         admin: {
           'bg': '#F9FAFB',              // Light gray background
           'surface': '#FFFFFF',         // White surface
@@ -46,11 +47,12 @@ export default {
           'warning': '#D97706',         // Orange
           'error': '#DC2626',           // Red
         },
+        
         surface: {
-          DEFAULT: '#1A1A2E',
-          elevated: '#16213E',
-          card: '#0E1428',
-          overlay: 'rgba(15, 15, 35, 0.9)',
+          DEFAULT: '#1A1A1D',           // Charcoal Gray
+          elevated: '#2A2A2D',          // Slightly lighter for elevation
+          card: '#1A1A1D',              // Same as secondary background
+          overlay: 'rgba(0, 0, 0, 0.8)', // Black overlay
         },
       },
       fontFamily: {
@@ -218,13 +220,13 @@ export default {
       backgroundImage: {
         'gradient-radial': 'radial-gradient(var(--tw-gradient-stops))',
         'gradient-premium': 'linear-gradient(135deg, var(--tw-gradient-stops))',
-        'gradient-subtle': 'linear-gradient(180deg, #0F0F23 0%, #1A1A2E 100%)',
-        'gradient-hero': 'linear-gradient(135deg, #0F0F23 0%, #1A1A2E 50%, #16213E 100%)',
-        'gradient-hero-radial': 'radial-gradient(ellipse at 30% 20%, rgba(99, 102, 241, 0.12) 0%, transparent 50%), radial-gradient(ellipse at 70% 80%, rgba(99, 102, 241, 0.08) 0%, transparent 50%), linear-gradient(180deg, #0F0F23 0%, #1A1A2E 100%)',
-        'gradient-card': 'linear-gradient(180deg, rgba(22,33,62,0) 0%, rgba(22,33,62,0.8) 100%)',
-        'gradient-overlay': 'linear-gradient(180deg, rgba(15,15,35,0) 0%, rgba(15,15,35,0.8) 100%)',
-        'gradient-accent': 'linear-gradient(135deg, #6366F1 0%, #4F46E5 100%)',
-        'gradient-premium-subtle': 'linear-gradient(180deg, #0F0F23 0%, #1A1A2E 100%)',
+        'gradient-subtle': 'linear-gradient(180deg, #000000 0%, #1A1A1D 100%)',
+        'gradient-hero': 'linear-gradient(135deg, #000000 0%, #1A1A1D 50%, #2A2A2D 100%)',
+        'gradient-hero-radial': 'radial-gradient(ellipse at 30% 20%, rgba(246, 193, 204, 0.12) 0%, transparent 50%), radial-gradient(ellipse at 70% 80%, rgba(246, 193, 204, 0.08) 0%, transparent 50%), linear-gradient(180deg, #000000 0%, #1A1A1D 100%)',
+        'gradient-card': 'linear-gradient(180deg, rgba(26,26,29,0) 0%, rgba(26,26,29,0.8) 100%)',
+        'gradient-overlay': 'linear-gradient(180deg, rgba(0,0,0,0) 0%, rgba(0,0,0,0.8) 100%)',
+        'gradient-accent': 'linear-gradient(135deg, #F6C1CC 0%, #C89AA6 100%)',
+        'gradient-premium-subtle': 'linear-gradient(180deg, #000000 0%, #1A1A1D 100%)',
         'noise': "url(\"data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E\")",
       },
       backdropBlur: {
@@ -251,16 +253,16 @@ export default {
           fontFamily: 'Inter, system-ui, sans-serif',
         },
         '.shadow-glow': {
-          boxShadow: '0 0 20px rgba(99, 102, 241, 0.4)',
+          boxShadow: '0 0 20px rgba(246, 193, 204, 0.4)',
         },
         '.shadow-glow-lg': {
-          boxShadow: '0 0 40px rgba(99, 102, 241, 0.5)',
+          boxShadow: '0 0 40px rgba(246, 193, 204, 0.5)',
         },
         '.shadow-button': {
-          boxShadow: '0 2px 4px rgba(15, 15, 35, 0.4), 0 4px 8px rgba(15, 15, 35, 0.3)',
+          boxShadow: '0 2px 4px rgba(0, 0, 0, 0.4), 0 4px 8px rgba(0, 0, 0, 0.3)',
         },
         '.shadow-premium': {
-          boxShadow: '0 4px 6px -1px rgba(99, 102, 241, 0.3), 0 10px 20px -3px rgba(15, 15, 35, 0.4), 0 20px 40px -4px rgba(15, 15, 35, 0.3)',
+          boxShadow: '0 4px 6px -1px rgba(246, 193, 204, 0.3), 0 10px 20px -3px rgba(0, 0, 0, 0.4), 0 20px 40px -4px rgba(0, 0, 0, 0.3)',
         },
         '.shadow-card': {
           boxShadow: '0 2px 4px rgba(0, 0, 0, 0.2), 0 8px 16px rgba(0, 0, 0, 0.3)',
@@ -269,19 +271,19 @@ export default {
           boxShadow: '0 4px 8px rgba(0, 0, 0, 0.3), 0 16px 32px rgba(0, 0, 0, 0.4)',
         },
         '.bg-gradient-hero-radial': {
-          background: 'radial-gradient(ellipse at 30% 20%, rgba(99, 102, 241, 0.12) 0%, transparent 50%), radial-gradient(ellipse at 70% 80%, rgba(99, 102, 241, 0.08) 0%, transparent 50%), linear-gradient(180deg, #0F0F23 0%, #1A1A2E 100%)',
+          background: 'radial-gradient(ellipse at 30% 20%, rgba(246, 193, 204, 0.12) 0%, transparent 50%), radial-gradient(ellipse at 70% 80%, rgba(246, 193, 204, 0.08) 0%, transparent 50%), linear-gradient(180deg, #000000 0%, #1A1A1D 100%)',
         },
         '.bg-gradient-premium-subtle': {
-          background: 'linear-gradient(180deg, #0F0F23 0%, #1A1A2E 100%)',
+          background: 'linear-gradient(180deg, #000000 0%, #1A1A1D 100%)',
         },
         '.bg-gradient-premium-radial-top': {
-          background: 'radial-gradient(ellipse at top, #16213E 0%, #0F0F23 70%)',
+          background: 'radial-gradient(ellipse at top, #2A2A2D 0%, #000000 70%)',
         },
         '.glass': {
-          background: 'rgba(26, 26, 46, 0.7)',
+          background: 'rgba(26, 26, 29, 0.7)',
           backdropFilter: 'blur(12px)',
           WebkitBackdropFilter: 'blur(12px)',
-          border: '1px solid rgba(255, 255, 255, 0.08)',
+          border: '1px solid rgba(138, 138, 142, 0.2)',
         },
         '.ease-smooth': {
           transitionTimingFunction: 'cubic-bezier(0.25, 0.1, 0.25, 1)',
@@ -290,7 +292,7 @@ export default {
           transitionTimingFunction: 'cubic-bezier(0.4, 0, 0.2, 1)',
         },
         '.border-subtle': {
-          border: '1px solid rgba(255, 255, 255, 0.05)',
+          border: '1px solid rgba(138, 138, 142, 0.2)',
         },
         '.section-spacing': {
           paddingTop: '4rem',
