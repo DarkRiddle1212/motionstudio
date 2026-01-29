@@ -159,16 +159,63 @@ const UserManagement = () => {
   const handleDeleteUsers = async (selectedUsers: User[]) => {
     if (!token) return;
     
-    for (const user of selectedUsers) {
-      await fetch(`${API_URL}/api/admin/users/${user.id}`, {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
-      });
-    }
+    const userIds = selectedUsers.map(u => u.id);
+    await fetch(`${API_URL}/api/admin/users/bulk-update`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        userIds,
+        action: 'delete',
+        data: {},
+        confirmed: true,
+      }),
+    });
     setSelectedIds([]);
     fetchUsers();
+  };
+
+  const handleBulkRoleChange = async (selectedUsers: User[], newRole: string) => {
+    if (!token) return;
+    
+    const userIds = selectedUsers.map(u => u.id);
+    await fetch(`${API_URL}/api/admin/users/bulk-update`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        userIds,
+        action: 'update_role',
+        data: { role: newRole },
+        confirmed: true,
+      }),
+    });
+    setSelectedIds([]);
+    fetchUsers();
+  };
+
+  const handleBulkEmailNotification = async (selectedUsers: User[], emailData: any) => {
+    if (!token) return;
+    
+    const userIds = selectedUsers.map(u => u.id);
+    await fetch(`${API_URL}/api/admin/users/bulk-update`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        userIds,
+        action: 'send_email',
+        data: emailData,
+        confirmed: true,
+      }),
+    });
+    setSelectedIds([]);
   };
 
   const columns: ColumnDef<User>[] = [
@@ -275,6 +322,59 @@ const UserManagement = () => {
       icon: BulkActionIcons.Suspend,
       action: handleSuspendUsers,
       confirmationMessage: 'Are you sure you want to suspend the selected users? They will not be able to log in.',
+    },
+    {
+      id: 'role-student',
+      label: 'Set as Student',
+      icon: (
+        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+        </svg>
+      ),
+      action: (users) => handleBulkRoleChange(users, 'student'),
+      confirmationMessage: 'Are you sure you want to change the role of selected users to Student?',
+    },
+    {
+      id: 'role-instructor',
+      label: 'Set as Instructor',
+      icon: (
+        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+        </svg>
+      ),
+      action: (users) => handleBulkRoleChange(users, 'instructor'),
+      confirmationMessage: 'Are you sure you want to change the role of selected users to Instructor?',
+    },
+    {
+      id: 'email',
+      label: 'Send Email',
+      icon: BulkActionIcons.Email,
+      action: (users) => {
+        // This would open a modal for composing email
+        console.log('Send email to', users.length, 'users');
+      },
+    },
+    {
+      id: 'export',
+      label: 'Export Data',
+      icon: BulkActionIcons.Export,
+      action: async (users) => {
+        const userIds = users.map(u => u.id);
+        const response = await fetch(`${API_URL}/api/admin/data/export`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            format: 'csv',
+            tables: ['users'],
+            filters: { userIds },
+          }),
+        });
+        const data = await response.json();
+        console.log('Export initiated:', data);
+      },
     },
     {
       id: 'delete',

@@ -272,3 +272,19 @@ model ConfigBackup {
 
   @@map("config_backups")
 }
+
+model ScheduledOperation {
+  id          String   @id @default(cuid())
+  type        String   // bulk_user, bulk_course, data_export
+  operation   String   // JSON string of operation details
+  scheduledFor DateTime
+  status      String   @default("pending") // pending, running, completed, failed
+  progress    Float?   // 0-100 for progress tracking
+  result      String?  // JSON string of operation result
+  error       String?  // Error message if failed
+  createdBy   String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("scheduled_operations")
+}

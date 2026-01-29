@@ -3,6 +3,7 @@ export { default as AdminProtectedRoute } from './AdminProtectedRoute';
 export { default as AdminDashboard } from './AdminDashboard';
 export { default as UserManagement } from './UserManagement';
 export { default as CourseManagement } from './CourseManagement';
+export { default as BulkOperationsManagement } from './BulkOperationsManagement';
 export { default as FinancialDashboard } from './FinancialDashboard';
 export { default as ScholarshipManagement } from './ScholarshipManagement';
 export { default as AnalyticsDashboard } from './AnalyticsDashboard';
