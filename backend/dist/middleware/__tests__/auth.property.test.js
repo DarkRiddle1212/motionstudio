@@ -32,231 +32,286 @@ var __importStar = (this && this.__importStar) || (function () {
         return result;
     };
 })();
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 const fc = __importStar(require("fast-check"));
+const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 const auth_1 = require("../auth");
 const jwt_1 = require("../../utils/jwt");
+const auditService_1 = require("../../services/auditService");
 /**
- * Feature: motion-studio-platform, Property 10: Authentication State Consistency
- * Validates: Requirements 3.5
+ * **Feature: admin-panel, Property 2: Session timeout enforcement**
+ * **Validates: Requirements 1.4**
  *
- * For any authenticated user, logging out should clear the session and subsequent
- * requests without a valid token should be rejected with an authentication error.
+ * For any admin session that exceeds the configured timeout period, the system should
+ * automatically log out the user and require re-authentication.
  */
-describe('Property-Based Tests: Authentication Middleware', () => {
-    describe('Property 10: Authentication State Consistency', () => {
-        it('should reject requests without authorization header', async () => {
+// Mock the audit service to avoid database calls during property tests
+jest.mock('../../services/auditService');
+const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';
+describe('Property-Based Tests: Session Timeout Enforcement', () => {
+    let mockAuditService;
+    beforeEach(() => {
+        mockAuditService = new auditService_1.AuditService();
+        mockAuditService.logAuthAction = jest.fn().mockResolvedValue(undefined);
+    });
+    afterEach(() => {
+        jest.clearAllMocks();
+    });
+    describe('Property 2: Session timeout enforcement', () => {
+        /**
+         * Property 2a: Expired admin tokens are rejected
+         * For any admin token that has exceeded the 4-hour timeout, authentication should fail
+         */
+        it('Property 2a: Expired admin tokens are rejected', async () => {
             await fc.assert(fc.asyncProperty(
-            // Generate random request data
-            fc.record({
-                method: fc.constantFrom('GET', 'POST', 'PUT', 'DELETE'),
-                url: fc.string({ minLength: 1, maxLength: 100 }),
-                body: fc.object(),
-            }), async (requestData) => {
-                // Create mock request without authorization header
-                const mockRequest = {
-                    method: requestData.method,
-                    url: requestData.url,
-                    body: requestData.body,
-                    headers: {}, // No authorization header
-                };
-                const mockResponse = {
-                    status: jest.fn().mockReturnThis(),
-                    json: jest.fn().mockReturnThis(),
-                };
-                const mockNext = jest.fn();
-                // Call the authentication middleware
-                (0, auth_1.authenticateToken)(mockRequest, mockResponse, mockNext);
-                // Verify that the request was rejected
-                expect(mockResponse.status).toHaveBeenCalledWith(401);
-                expect(mockResponse.json).toHaveBeenCalledWith({
-                    error: 'Authentication required',
-                });
-                expect(mockNext).not.toHaveBeenCalled();
-                expect(mockRequest.user).toBeUndefined();
-            }), { numRuns: 10 });
-        });
-        it('should reject requests with invalid tokens', async () => {
-            await fc.assert(fc.asyncProperty(
-            // Generate random invalid tokens (non-empty strings that aren't valid JWTs)
-            fc.string({ minLength: 1, maxLength: 200 })
-                .filter(token => token.trim().length > 0), // Ensure it's not empty/whitespace
-            fc.record({
-                method: fc.constantFrom('GET', 'POST', 'PUT', 'DELETE'),
-                url: fc.string({ minLength: 1, maxLength: 100 }),
-            }), async (invalidToken, requestData) => {
-                // Create mock request with invalid token
-                const mockRequest = {
-                    method: requestData.method,
-                    url: requestData.url,
-                    headers: {
-                        authorization: `Bearer ${invalidToken}`,
-                    },
-                };
-                const mockResponse = {
-                    status: jest.fn().mockReturnThis(),
-                    json: jest.fn().mockReturnThis(),
-                };
-                const mockNext = jest.fn();
-                // Call the authentication middleware
-                (0, auth_1.authenticateToken)(mockRequest, mockResponse, mockNext);
-                // Verify that the request was rejected
-                expect(mockResponse.status).toHaveBeenCalledWith(401);
-                // The middleware extracts token using split(' ')[1]
-                const authHeader = `Bearer ${invalidToken}`;
-                const extractedToken = authHeader.split(' ')[1];
-                if (!extractedToken || extractedToken.trim().length === 0) {
-                    // No valid token extracted -> "Authentication required"
-                    expect(mockResponse.json).toHaveBeenCalledWith({
-                        error: 'Authentication required',
-                    });
-                }
-                else {
-                    // Token exists but is invalid -> "Session expired, please log in again"
-                    expect(mockResponse.json).toHaveBeenCalledWith({
-                        error: 'Session expired, please log in again',
-                    });
-                }
-                expect(mockNext).not.toHaveBeenCalled();
-                expect(mockRequest.user).toBeUndefined();
-            }), { numRuns: 10 });
-        });
-        it('should accept requests with valid tokens and set user data', async () => {
-            await fc.assert(fc.asyncProperty(
-            // Generate random valid user data
+            // Generate random admin user data
             fc.record({
                 userId: fc.uuid(),
                 email: fc.emailAddress(),
-                role: fc.constantFrom('student', 'instructor', 'admin'),
-            }), fc.record({
-                method: fc.constantFrom('GET', 'POST', 'PUT', 'DELETE'),
-                url: fc.string({ minLength: 1, maxLength: 100 }),
-            }), async (userData, requestData) => {
-                // Generate a valid token for the user
+                role: fc.constant('admin'),
+                sessionId: fc.string({ minLength: 10, maxLength: 30 }),
+                adminLevel: fc.constantFrom('admin', 'super_admin'),
+            }), 
+            // Generate different timeout scenarios (in seconds)
+            fc.record({
+                timeoutOffsetSeconds: fc.integer({ min: 1, max: 7200 }), // 1 second to 2 hours past timeout
+            }), async (adminData, timeoutConfig) => {
+                // Create an expired token by setting both issuedAt and exp to past values
+                const pastTime = Math.floor(Date.now() / 1000) - (4 * 3600 + timeoutConfig.timeoutOffsetSeconds);
                 const tokenPayload = {
-                    userId: userData.userId,
-                    email: userData.email,
-                    role: userData.role,
+                    ...adminData,
+                    issuedAt: pastTime,
+                    exp: pastTime + (4 * 3600), // Token expired timeoutOffsetSeconds ago
                 };
-                const validToken = (0, jwt_1.generateToken)(tokenPayload);
+                // Create the expired token directly using jwt.sign
+                const expiredToken = jsonwebtoken_1.default.sign(tokenPayload, JWT_SECRET);
+                // Create session for the admin
+                (0, auth_1.createAdminSession)(adminData.userId, adminData.sessionId);
+                // Create mock request with expired token
+                const mockReq = {
+                    headers: {
+                        authorization: `Bearer ${expiredToken}`,
+                    },
+                    ip: '127.0.0.1',
+                    connection: { remoteAddress: '127.0.0.1' },
+                    get: jest.fn().mockReturnValue('test-user-agent'),
+                };
+                const mockRes = {
+                    status: jest.fn().mockReturnThis(),
+                    json: jest.fn().mockReturnThis(),
+                };
+                const mockNext = jest.fn();
+                // Attempt authentication with expired token
+                (0, auth_1.authenticateAdminToken)(mockReq, mockRes, mockNext);
+                // Verify that authentication was rejected
+                expect(mockRes.status).toHaveBeenCalledWith(401);
+                expect(mockRes.json).toHaveBeenCalledWith({
+                    error: 'Admin session expired, please log in again'
+                });
+                expect(mockNext).not.toHaveBeenCalled();
+                // Clean up session
+                (0, auth_1.destroyAdminSession)(adminData.sessionId);
+                return true;
+            }), { numRuns: 100 });
+        });
+        /**
+         * Property 2b: Valid admin tokens within timeout are accepted
+         * For any admin token that is within the 4-hour timeout window, authentication should succeed
+         */
+        it('Property 2b: Valid admin tokens within timeout are accepted', async () => {
+            await fc.assert(fc.asyncProperty(
+            // Generate random admin user data
+            fc.record({
+                userId: fc.uuid(),
+                email: fc.emailAddress(),
+                role: fc.constant('admin'),
+                sessionId: fc.string({ minLength: 10, maxLength: 30 }),
+                adminLevel: fc.constantFrom('admin', 'super_admin'),
+            }), 
+            // Generate different valid timeout scenarios (in seconds)
+            fc.record({
+                timeBeforeExpiry: fc.integer({ min: 60, max: 14400 }), // 1 minute to 4 hours before expiry
+            }), async (adminData, timeConfig) => {
+                // Create a valid admin token using the standard function
+                const validToken = (0, jwt_1.generateAdminToken)(adminData);
+                // Create session for the admin
+                (0, auth_1.createAdminSession)(adminData.userId, adminData.sessionId);
                 // Create mock request with valid token
-                const mockRequest = {
-                    method: requestData.method,
-                    url: requestData.url,
+                const mockReq = {
                     headers: {
                         authorization: `Bearer ${validToken}`,
                     },
+                    ip: '127.0.0.1',
+                    connection: { remoteAddress: '127.0.0.1' },
+                    get: jest.fn().mockReturnValue('test-user-agent'),
                 };
-                const mockResponse = {
+                const mockRes = {
                     status: jest.fn().mockReturnThis(),
                     json: jest.fn().mockReturnThis(),
                 };
                 const mockNext = jest.fn();
-                // Call the authentication middleware
-                (0, auth_1.authenticateToken)(mockRequest, mockResponse, mockNext);
-                // Verify that the request was accepted
-                expect(mockResponse.status).not.toHaveBeenCalled();
-                expect(mockResponse.json).not.toHaveBeenCalled();
+                // Attempt authentication with valid token
+                (0, auth_1.authenticateAdminToken)(mockReq, mockRes, mockNext);
+                // Verify that authentication was successful
+                expect(mockRes.status).not.toHaveBeenCalled();
+                expect(mockRes.json).not.toHaveBeenCalled();
                 expect(mockNext).toHaveBeenCalled();
-                // Verify that user data was set correctly
-                expect(mockRequest.user).toBeDefined();
-                expect(mockRequest.user.userId).toBe(userData.userId);
-                expect(mockRequest.user.email).toBe(userData.email);
-                expect(mockRequest.user.role).toBe(userData.role);
-            }), { numRuns: 10 });
+                expect(mockReq.adminUser).toBeDefined();
+                expect(mockReq.adminUser?.userId).toBe(adminData.userId);
+                expect(mockReq.adminUser?.sessionId).toBe(adminData.sessionId);
+                // Clean up session
+                (0, auth_1.destroyAdminSession)(adminData.sessionId);
+                return true;
+            }), { numRuns: 100 });
         });
-        it('should reject requests with malformed authorization headers', async () => {
+        /**
+         * Property 2c: Session timeout triggers audit logging
+         * For any admin session that times out, an audit log entry should be created
+         */
+        it('Property 2c: Session timeout triggers audit logging', async () => {
             await fc.assert(fc.asyncProperty(
-            // Generate malformed authorization headers that result in no token
-            fc.oneof(fc.string({ minLength: 1, maxLength: 50 })
-                .filter(s => !s.startsWith('Bearer ')), // Random string without "Bearer "
-            fc.constant('Bearer'), // Just "Bearer" without token
-            fc.constant('Bearer '), // "Bearer " with empty token
-            fc.constant('')), fc.record({
-                method: fc.constantFrom('GET', 'POST', 'PUT', 'DELETE'),
-                url: fc.string({ minLength: 1, maxLength: 100 }),
-            }), async (malformedAuth, requestData) => {
-                // Create mock request with malformed authorization header
-                const mockRequest = {
-                    method: requestData.method,
-                    url: requestData.url,
-                    headers: {
-                        authorization: malformedAuth,
-                    },
-                };
-                const mockResponse = {
-                    status: jest.fn().mockReturnThis(),
-                    json: jest.fn().mockReturnThis(),
-                };
-                const mockNext = jest.fn();
-                // Call the authentication middleware
-                (0, auth_1.authenticateToken)(mockRequest, mockResponse, mockNext);
-                // The middleware logic: if no token is extracted, it returns "Authentication required"
-                // If a token exists but is invalid, it returns "Session expired, please log in again"
-                const authHeader = malformedAuth;
-                const token = authHeader && authHeader.split(' ')[1];
-                expect(mockResponse.status).toHaveBeenCalledWith(401);
-                if (!token) {
-                    // No token extracted -> "Authentication required"
-                    expect(mockResponse.json).toHaveBeenCalledWith({
-                        error: 'Authentication required',
-                    });
-                }
-                else {
-                    // Token exists but is invalid -> "Session expired, please log in again"
-                    expect(mockResponse.json).toHaveBeenCalledWith({
-                        error: 'Session expired, please log in again',
-                    });
-                }
-                expect(mockNext).not.toHaveBeenCalled();
-                expect(mockRequest.user).toBeUndefined();
-            }), { numRuns: 10 });
-        });
-        it('should maintain authentication state consistency across multiple requests', async () => {
-            await fc.assert(fc.asyncProperty(
-            // Generate user data and multiple request scenarios
+            // Generate random admin user data
             fc.record({
                 userId: fc.uuid(),
                 email: fc.emailAddress(),
-                role: fc.constantFrom('student', 'instructor', 'admin'),
-            }), fc.array(fc.record({
-                method: fc.constantFrom('GET', 'POST', 'PUT', 'DELETE'),
-                url: fc.string({ minLength: 1, maxLength: 100 }),
-            }), { minLength: 2, maxLength: 5 }), async (userData, requests) => {
-                // Generate a valid token for the user
+                role: fc.constant('admin'),
+                sessionId: fc.string({ minLength: 10, maxLength: 30 }),
+                adminLevel: fc.constantFrom('admin', 'super_admin'),
+            }), async (adminData) => {
+                // Create an expired token
+                const pastTime = Math.floor(Date.now() / 1000) - (4 * 3600 + 300); // 4 hours and 5 minutes ago
                 const tokenPayload = {
-                    userId: userData.userId,
-                    email: userData.email,
-                    role: userData.role,
+                    ...adminData,
+                    issuedAt: pastTime,
+                    exp: pastTime + (4 * 3600), // Token expired 5 minutes ago
                 };
-                const validToken = (0, jwt_1.generateToken)(tokenPayload);
-                // Test multiple requests with the same token
-                for (const requestData of requests) {
-                    const mockRequest = {
-                        method: requestData.method,
-                        url: requestData.url,
-                        headers: {
-                            authorization: `Bearer ${validToken}`,
-                        },
-                    };
-                    const mockResponse = {
-                        status: jest.fn().mockReturnThis(),
-                        json: jest.fn().mockReturnThis(),
-                    };
-                    const mockNext = jest.fn();
-                    // Call the authentication middleware
-                    (0, auth_1.authenticateToken)(mockRequest, mockResponse, mockNext);
-                    // Verify consistent behavior across all requests
-                    expect(mockResponse.status).not.toHaveBeenCalled();
-                    expect(mockResponse.json).not.toHaveBeenCalled();
-                    expect(mockNext).toHaveBeenCalled();
-                    // Verify consistent user data
-                    expect(mockRequest.user).toBeDefined();
-                    expect(mockRequest.user.userId).toBe(userData.userId);
-                    expect(mockRequest.user.email).toBe(userData.email);
-                    expect(mockRequest.user.role).toBe(userData.role);
+                const expiredToken = jsonwebtoken_1.default.sign(tokenPayload, JWT_SECRET);
+                // Create session for the admin
+                (0, auth_1.createAdminSession)(adminData.userId, adminData.sessionId);
+                // Create mock request with expired token
+                const mockReq = {
+                    headers: {
+                        authorization: `Bearer ${expiredToken}`,
+                    },
+                    ip: '192.168.1.100',
+                    connection: { remoteAddress: '192.168.1.100' },
+                    get: jest.fn().mockReturnValue('Mozilla/5.0 Test Browser'),
+                };
+                const mockRes = {
+                    status: jest.fn().mockReturnThis(),
+                    json: jest.fn().mockReturnThis(),
+                };
+                const mockNext = jest.fn();
+                // Attempt authentication with expired token
+                (0, auth_1.authenticateAdminToken)(mockReq, mockRes, mockNext);
+                // Verify that authentication was rejected
+                expect(mockRes.status).toHaveBeenCalledWith(401);
+                expect(mockRes.json).toHaveBeenCalledWith({
+                    error: 'Admin session expired, please log in again'
+                });
+                // Clean up session
+                (0, auth_1.destroyAdminSession)(adminData.sessionId);
+                return true;
+            }), { numRuns: 100 });
+        });
+        /**
+         * Property 2d: Invalid session IDs are rejected even with valid tokens
+         * For any admin token with a session ID that doesn't exist in active sessions, authentication should fail
+         */
+        it('Property 2d: Invalid session IDs are rejected even with valid tokens', async () => {
+            await fc.assert(fc.asyncProperty(
+            // Generate random admin user data
+            fc.record({
+                userId: fc.uuid(),
+                email: fc.emailAddress(),
+                role: fc.constant('admin'),
+                sessionId: fc.string({ minLength: 10, maxLength: 30 }),
+                adminLevel: fc.constantFrom('admin', 'super_admin'),
+            }), 
+            // Generate a different session ID that won't be in active sessions
+            fc.string({ minLength: 10, maxLength: 30 }), async (adminData, invalidSessionId) => {
+                // Ensure the invalid session ID is different from the valid one
+                if (invalidSessionId === adminData.sessionId) {
+                    invalidSessionId = invalidSessionId + '_invalid';
                 }
-            }), { numRuns: 10 });
+                // Create a valid admin token but with an invalid session ID
+                const tokenWithInvalidSession = (0, jwt_1.generateAdminToken)({
+                    ...adminData,
+                    sessionId: invalidSessionId, // Use invalid session ID
+                });
+                // Create session for the admin with the CORRECT session ID (not the one in the token)
+                (0, auth_1.createAdminSession)(adminData.userId, adminData.sessionId);
+                // Create mock request with token containing invalid session ID
+                const mockReq = {
+                    headers: {
+                        authorization: `Bearer ${tokenWithInvalidSession}`,
+                    },
+                    ip: '127.0.0.1',
+                    connection: { remoteAddress: '127.0.0.1' },
+                    get: jest.fn().mockReturnValue('test-user-agent'),
+                };
+                const mockRes = {
+                    status: jest.fn().mockReturnThis(),
+                    json: jest.fn().mockReturnThis(),
+                };
+                const mockNext = jest.fn();
+                // Attempt authentication with token containing invalid session ID
+                (0, auth_1.authenticateAdminToken)(mockReq, mockRes, mockNext);
+                // Verify that authentication was rejected due to invalid session
+                expect(mockRes.status).toHaveBeenCalledWith(401);
+                expect(mockRes.json).toHaveBeenCalledWith({
+                    error: 'Admin session invalid or expired'
+                });
+                expect(mockNext).not.toHaveBeenCalled();
+                // Clean up session
+                (0, auth_1.destroyAdminSession)(adminData.sessionId);
+                return true;
+            }), { numRuns: 100 });
+        });
+        /**
+         * Property 2e: Session activity is updated on successful authentication
+         * For any valid admin authentication, the session's last activity should be updated
+         */
+        it('Property 2e: Session activity is updated on successful authentication', async () => {
+            await fc.assert(fc.asyncProperty(
+            // Generate random admin user data
+            fc.record({
+                userId: fc.uuid(),
+                email: fc.emailAddress(),
+                role: fc.constant('admin'),
+                sessionId: fc.string({ minLength: 10, maxLength: 30 }),
+                adminLevel: fc.constantFrom('admin', 'super_admin'),
+            }), async (adminData) => {
+                // Create a valid admin token
+                const validToken = (0, jwt_1.generateAdminToken)(adminData);
+                // Create session for the admin
+                (0, auth_1.createAdminSession)(adminData.userId, adminData.sessionId);
+                // Create mock request with valid token
+                const mockReq = {
+                    headers: {
+                        authorization: `Bearer ${validToken}`,
+                    },
+                    ip: '127.0.0.1',
+                    connection: { remoteAddress: '127.0.0.1' },
+                    get: jest.fn().mockReturnValue('test-user-agent'),
+                };
+                const mockRes = {
+                    status: jest.fn().mockReturnThis(),
+                    json: jest.fn().mockReturnThis(),
+                };
+                const mockNext = jest.fn();
+                // Attempt authentication with valid token
+                (0, auth_1.authenticateAdminToken)(mockReq, mockRes, mockNext);
+                // Verify that authentication was successful
+                expect(mockNext).toHaveBeenCalled();
+                expect(mockReq.adminUser).toBeDefined();
+                // Clean up session
+                (0, auth_1.destroyAdminSession)(adminData.sessionId);
+                return true;
+            }), { numRuns: 100 });
         });
     });
 });

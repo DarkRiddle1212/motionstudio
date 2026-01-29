@@ -26,11 +26,11 @@ export declare class ProjectService {
     getAllProjects(includeUnpublished?: boolean): Promise<{
         id: string;
         createdAt: Date;
-        updatedAt: Date;
         title: string;
         description: string;
         thumbnailUrl: string;
         isPublished: boolean;
+        updatedAt: Date;
         order: number;
         goal: string;
         solution: string;
@@ -41,11 +41,11 @@ export declare class ProjectService {
     getProjectById(id: string, includeUnpublished?: boolean): Promise<{
         id: string;
         createdAt: Date;
-        updatedAt: Date;
         title: string;
         description: string;
         thumbnailUrl: string;
         isPublished: boolean;
+        updatedAt: Date;
         order: number;
         goal: string;
         solution: string;
@@ -56,11 +56,11 @@ export declare class ProjectService {
     createProject(data: CreateProjectData): Promise<{
         id: string;
         createdAt: Date;
-        updatedAt: Date;
         title: string;
         description: string;
         thumbnailUrl: string;
         isPublished: boolean;
+        updatedAt: Date;
         order: number;
         goal: string;
         solution: string;
@@ -71,11 +71,11 @@ export declare class ProjectService {
     updateProject(id: string, data: UpdateProjectData): Promise<{
         id: string;
         createdAt: Date;
-        updatedAt: Date;
         title: string;
         description: string;
         thumbnailUrl: string;
         isPublished: boolean;
+        updatedAt: Date;
         order: number;
         goal: string;
         solution: string;
@@ -89,11 +89,11 @@ export declare class ProjectService {
     getPublishedProjects(): Promise<{
         id: string;
         createdAt: Date;
-        updatedAt: Date;
         title: string;
         description: string;
         thumbnailUrl: string;
         isPublished: boolean;
+        updatedAt: Date;
         order: number;
         goal: string;
         solution: string;

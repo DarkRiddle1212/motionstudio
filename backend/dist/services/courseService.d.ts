@@ -28,15 +28,14 @@ export declare class CourseService {
             assignments: number;
         };
         instructor: {
+            id: string;
             email: string;
             firstName: string | null;
             lastName: string | null;
-            id: string;
         };
     } & {
         id: string;
         createdAt: Date;
-        updatedAt: Date;
         title: string;
         description: string;
         instructorId: string;
@@ -47,6 +46,7 @@ export declare class CourseService {
         introVideoUrl: string | null;
         thumbnailUrl: string | null;
         isPublished: boolean;
+        updatedAt: Date;
     }>;
     getAllCourses(includeUnpublished?: boolean): Promise<({
         _count: {
@@ -55,15 +55,14 @@ export declare class CourseService {
             assignments: number;
         };
         instructor: {
+            id: string;
             email: string;
             firstName: string | null;
             lastName: string | null;
-            id: string;
         };
     } & {
         id: string;
         createdAt: Date;
-        updatedAt: Date;
         title: string;
         description: string;
         instructorId: string;
@@ -74,6 +73,7 @@ export declare class CourseService {
         introVideoUrl: string | null;
         thumbnailUrl: string | null;
         isPublished: boolean;
+        updatedAt: Date;
     })[]>;
     getCourseById(courseId: string, includeUnpublished?: boolean): Promise<{
         _count: {
@@ -82,10 +82,10 @@ export declare class CourseService {
             assignments: number;
         };
         instructor: {
+            id: string;
             email: string;
             firstName: string | null;
             lastName: string | null;
-            id: string;
         };
         lessons: {
             id: string;
@@ -106,7 +106,6 @@ export declare class CourseService {
     } & {
         id: string;
         createdAt: Date;
-        updatedAt: Date;
         title: string;
         description: string;
         instructorId: string;
@@ -117,6 +116,7 @@ export declare class CourseService {
         introVideoUrl: string | null;
         thumbnailUrl: string | null;
         isPublished: boolean;
+        updatedAt: Date;
     }>;
     updateCourse(courseId: string, instructorId: string, data: UpdateCourseData): Promise<{
         _count: {
@@ -125,15 +125,14 @@ export declare class CourseService {
             assignments: number;
         };
         instructor: {
+            id: string;
             email: string;
             firstName: string | null;
             lastName: string | null;
-            id: string;
         };
     } & {
         id: string;
         createdAt: Date;
-        updatedAt: Date;
         title: string;
         description: string;
         instructorId: string;
@@ -144,6 +143,7 @@ export declare class CourseService {
         introVideoUrl: string | null;
         thumbnailUrl: string | null;
         isPublished: boolean;
+        updatedAt: Date;
     }>;
     deleteCourse(courseId: string, instructorId: string): Promise<{
         message: string;
@@ -157,7 +157,6 @@ export declare class CourseService {
     } & {
         id: string;
         createdAt: Date;
-        updatedAt: Date;
         title: string;
         description: string;
         instructorId: string;
@@ -168,6 +167,7 @@ export declare class CourseService {
         introVideoUrl: string | null;
         thumbnailUrl: string | null;
         isPublished: boolean;
+        updatedAt: Date;
     })[]>;
     enrollStudent(courseId: string, studentId: string): Promise<{
         course: {
@@ -181,8 +181,8 @@ export declare class CourseService {
     } & {
         id: string;
         createdAt: Date;
-        updatedAt: Date;
         courseId: string;
+        updatedAt: Date;
         studentId: string;
         status: string;
         enrolledAt: Date;
@@ -201,8 +201,8 @@ export declare class CourseService {
     } & {
         id: string;
         createdAt: Date;
-        updatedAt: Date;
         courseId: string;
+        updatedAt: Date;
         studentId: string;
         status: string;
         enrolledAt: Date;
@@ -228,8 +228,8 @@ export declare class CourseService {
     } & {
         id: string;
         createdAt: Date;
-        updatedAt: Date;
         courseId: string;
+        updatedAt: Date;
         studentId: string;
         status: string;
         enrolledAt: Date;
@@ -239,8 +239,8 @@ export declare class CourseService {
     updateEnrollmentProgress(studentId: string, courseId: string): Promise<{
         id: string;
         createdAt: Date;
-        updatedAt: Date;
         courseId: string;
+        updatedAt: Date;
         studentId: string;
         status: string;
         enrolledAt: Date;

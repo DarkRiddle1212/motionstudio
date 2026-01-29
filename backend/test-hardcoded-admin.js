@@ -4,7 +4,7 @@ async function testHardcodedAdmin() {
   try {
     console.log('Testing hardcoded admin login...');
     
-    const response = await axios.post('http://localhost:5000/api/admin/login', {
+    const response = await axios.post('http://localhost:5001/api/admin/login', {
       email: 'bolaowoade8@gmail.com',
       password: 'Bolaowo@26'
     });
@@ -32,7 +32,7 @@ async function testAdminEndpoint(token) {
   try {
     console.log('\nTesting admin endpoint access...');
     
-    const response = await axios.get('http://localhost:5000/api/admin/users', {
+    const response = await axios.get('http://localhost:5001/api/admin/users', {
       headers: {
         'Authorization': `Bearer ${token}`
       }

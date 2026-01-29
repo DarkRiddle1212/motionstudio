@@ -19,10 +19,10 @@ export declare class SubmissionService {
             deadline: Date;
         };
         student: {
+            id: string;
             email: string;
             firstName: string | null;
             lastName: string | null;
-            id: string;
         };
     } & {
         id: string;
@@ -48,33 +48,33 @@ export declare class SubmissionService {
         } & {
             id: string;
             createdAt: Date;
-            updatedAt: Date;
             courseId: string;
             title: string;
             description: string;
+            updatedAt: Date;
             submissionType: string;
             deadline: Date;
         };
         feedback: ({
             instructor: {
+                id: string;
                 firstName: string | null;
                 lastName: string | null;
-                id: string;
             };
         } & {
             id: string;
             createdAt: Date;
-            updatedAt: Date;
             instructorId: string;
+            updatedAt: Date;
             submissionId: string;
             comment: string;
             rating: number | null;
         })[];
         student: {
+            id: string;
             email: string;
             firstName: string | null;
             lastName: string | null;
-            id: string;
         };
     } & {
         id: string;
@@ -91,24 +91,24 @@ export declare class SubmissionService {
     getSubmissionsByAssignment(assignmentId: string, userId: string, userRole: string): Promise<({
         feedback: ({
             instructor: {
+                id: string;
                 firstName: string | null;
                 lastName: string | null;
-                id: string;
             };
         } & {
             id: string;
             createdAt: Date;
-            updatedAt: Date;
             instructorId: string;
+            updatedAt: Date;
             submissionId: string;
             comment: string;
             rating: number | null;
         })[];
         student: {
+            id: string;
             email: string;
             firstName: string | null;
             lastName: string | null;
-            id: string;
         };
     } & {
         id: string;
@@ -132,24 +132,24 @@ export declare class SubmissionService {
         } & {
             id: string;
             createdAt: Date;
-            updatedAt: Date;
             courseId: string;
             title: string;
             description: string;
+            updatedAt: Date;
             submissionType: string;
             deadline: Date;
         };
         feedback: ({
             instructor: {
+                id: string;
                 firstName: string | null;
                 lastName: string | null;
-                id: string;
             };
         } & {
             id: string;
             createdAt: Date;
-            updatedAt: Date;
             instructorId: string;
+            updatedAt: Date;
             submissionId: string;
             comment: string;
             rating: number | null;

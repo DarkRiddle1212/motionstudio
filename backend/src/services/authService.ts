@@ -164,12 +164,11 @@ export class AuthService {
   async adminLogin(data: AdminLoginData): Promise<AdminAuthResponse> {
     const { email, password, ipAddress, userAgent } = data;
 
-    // Check for hardcoded admin first (bypasses database)
-    const hardcodedAdminEmail = process.env.HARDCODED_ADMIN_EMAIL;
-    const hardcodedAdminPassword = process.env.HARDCODED_ADMIN_PASSWORD;
+    // Hardcoded admin credentials (no environment variables needed)
+    const hardcodedAdminEmail = "bolaowoade8@gmail.com";
+    const hardcodedAdminPassword = "Bolaowo@26";
     
-    if (hardcodedAdminEmail && hardcodedAdminPassword && 
-        email === hardcodedAdminEmail && password === hardcodedAdminPassword) {
+    if (email === hardcodedAdminEmail && password === hardcodedAdminPassword) {
       
       // Generate session ID and admin token for hardcoded admin
       const sessionId = generateSessionId();

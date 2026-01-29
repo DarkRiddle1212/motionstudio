@@ -1,8 +1,12 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.requireLessonAccess = exports.requireCourseEnrollment = exports.requireRole = exports.authenticateToken = void 0;
+exports.requireLessonAccess = exports.requireCourseEnrollment = exports.forceLogoutAdminSession = exports.getActiveAdminSessions = exports.destroyAdminSession = exports.createAdminSession = exports.sessionTimeoutWarning = exports.requireAdminRole = exports.requireRole = exports.authenticateAdminToken = exports.authenticateToken = void 0;
 const jwt_1 = require("../utils/jwt");
 const prisma_1 = require("../utils/prisma");
+const auditService_1 = require("../services/auditService");
+const auditService = new auditService_1.AuditService();
+// Store active admin sessions in memory (in production, use Redis or database)
+const activeAdminSessions = new Map();
 const authenticateToken = (req, res, next) => {
     const authHeader = req.headers['authorization'];
     const token = authHeader && authHeader.split(' ')[1]; // Bearer TOKEN
@@ -19,6 +23,49 @@ const authenticateToken = (req, res, next) => {
     }
 };
 exports.authenticateToken = authenticateToken;
+const authenticateAdminToken = (req, res, next) => {
+    const authHeader = req.headers['authorization'];
+    const token = authHeader && authHeader.split(' ')[1]; // Bearer TOKEN
+    if (!token) {
+        return res.status(401).json({ error: 'Admin authentication required' });
+    }
+    try {
+        const decoded = (0, jwt_1.verifyAdminToken)(token);
+        // Check if session is still active
+        if (decoded.sessionId) {
+            const session = activeAdminSessions.get(decoded.sessionId);
+            if (!session || session.userId !== decoded.userId) {
+                return res.status(401).json({ error: 'Admin session invalid or expired' });
+            }
+            // Update last activity
+            session.lastActivity = new Date();
+            activeAdminSessions.set(decoded.sessionId, session);
+        }
+        req.adminUser = decoded;
+        req.user = decoded; // Also set regular user for compatibility
+        next();
+    }
+    catch (error) {
+        // Log session timeout
+        if (error instanceof Error && error.message.includes('expired')) {
+            const clientIp = req.ip || req.connection.remoteAddress || 'unknown';
+            const userAgent = req.get('User-Agent') || 'unknown';
+            // Try to get user ID from expired token for logging
+            try {
+                const expiredToken = token.split('.')[1];
+                const decoded = JSON.parse(Buffer.from(expiredToken, 'base64').toString());
+                if (decoded.userId) {
+                    auditService.logAuthAction(decoded.userId, 'session_timeout', clientIp, userAgent, { reason: 'Token expired' });
+                }
+            }
+            catch (logError) {
+                // Ignore logging errors
+            }
+        }
+        return res.status(401).json({ error: 'Admin session expired, please log in again' });
+    }
+};
+exports.authenticateAdminToken = authenticateAdminToken;
 const requireRole = (roles) => {
     return (req, res, next) => {
         if (!req.user) {
@@ -31,6 +78,67 @@ const requireRole = (roles) => {
     };
 };
 exports.requireRole = requireRole;
+const requireAdminRole = (req, res, next) => {
+    if (!req.adminUser) {
+        return res.status(401).json({ error: 'Admin authentication required' });
+    }
+    if (req.adminUser.role !== 'admin') {
+        return res.status(403).json({ error: 'Admin privileges required' });
+    }
+    next();
+};
+exports.requireAdminRole = requireAdminRole;
+const sessionTimeoutWarning = (req, res, next) => {
+    const authHeader = req.headers['authorization'];
+    const token = authHeader && authHeader.split(' ')[1];
+    if (token && req.adminUser) {
+        const remainingTime = (0, jwt_1.getTokenRemainingTime)(token);
+        const warningThreshold = 15 * 60; // 15 minutes
+        if (remainingTime > 0 && remainingTime < warningThreshold) {
+            res.setHeader('X-Session-Warning', 'true');
+            res.setHeader('X-Session-Remaining', remainingTime.toString());
+        }
+    }
+    next();
+};
+exports.sessionTimeoutWarning = sessionTimeoutWarning;
+const createAdminSession = (userId, sessionId) => {
+    activeAdminSessions.set(sessionId, {
+        userId,
+        sessionId,
+        lastActivity: new Date(),
+    });
+};
+exports.createAdminSession = createAdminSession;
+const destroyAdminSession = (sessionId) => {
+    activeAdminSessions.delete(sessionId);
+};
+exports.destroyAdminSession = destroyAdminSession;
+const getActiveAdminSessions = () => {
+    return Array.from(activeAdminSessions.values());
+};
+exports.getActiveAdminSessions = getActiveAdminSessions;
+const forceLogoutAdminSession = async (sessionId, adminId, ipAddress, userAgent) => {
+    const session = activeAdminSessions.get(sessionId);
+    if (session) {
+        (0, exports.destroyAdminSession)(sessionId);
+        // Log the forced logout
+        await auditService.logAuthAction(session.userId, 'force_logout', ipAddress, userAgent, { forcedBy: adminId, sessionId });
+        return true;
+    }
+    return false;
+};
+exports.forceLogoutAdminSession = forceLogoutAdminSession;
+// Cleanup expired sessions periodically
+setInterval(() => {
+    const now = new Date();
+    const sessionTimeout = 4 * 60 * 60 * 1000; // 4 hours in milliseconds
+    for (const [sessionId, session] of activeAdminSessions.entries()) {
+        if (now.getTime() - session.lastActivity.getTime() > sessionTimeout) {
+            activeAdminSessions.delete(sessionId);
+        }
+    }
+}, 60 * 1000); // Check every minute
 const requireCourseEnrollment = (courseIdParam = 'courseId') => {
     return async (req, res, next) => {
         if (!req.user) {

@@ -15,9 +15,9 @@ export declare class FeedbackService {
                 title: string;
             };
             student: {
+                id: string;
                 firstName: string | null;
                 lastName: string | null;
-                id: string;
             };
         } & {
             id: string;
@@ -32,15 +32,15 @@ export declare class FeedbackService {
             submittedAt: Date;
         };
         instructor: {
+            id: string;
             firstName: string | null;
             lastName: string | null;
-            id: string;
         };
     } & {
         id: string;
         createdAt: Date;
-        updatedAt: Date;
         instructorId: string;
+        updatedAt: Date;
         submissionId: string;
         comment: string;
         rating: number | null;
@@ -57,17 +57,17 @@ export declare class FeedbackService {
             } & {
                 id: string;
                 createdAt: Date;
-                updatedAt: Date;
                 courseId: string;
                 title: string;
                 description: string;
+                updatedAt: Date;
                 submissionType: string;
                 deadline: Date;
             };
             student: {
+                id: string;
                 firstName: string | null;
                 lastName: string | null;
-                id: string;
             };
         } & {
             id: string;
@@ -82,30 +82,30 @@ export declare class FeedbackService {
             submittedAt: Date;
         };
         instructor: {
+            id: string;
             firstName: string | null;
             lastName: string | null;
-            id: string;
         };
     } & {
         id: string;
         createdAt: Date;
-        updatedAt: Date;
         instructorId: string;
+        updatedAt: Date;
         submissionId: string;
         comment: string;
         rating: number | null;
     }>;
     getFeedbackBySubmission(submissionId: string, userId: string, userRole: string): Promise<({
         instructor: {
+            id: string;
             firstName: string | null;
             lastName: string | null;
-            id: string;
         };
     } & {
         id: string;
         createdAt: Date;
-        updatedAt: Date;
         instructorId: string;
+        updatedAt: Date;
         submissionId: string;
         comment: string;
         rating: number | null;
@@ -117,9 +117,9 @@ export declare class FeedbackService {
                 title: string;
             };
             student: {
+                id: string;
                 firstName: string | null;
                 lastName: string | null;
-                id: string;
             };
         } & {
             id: string;
@@ -134,15 +134,15 @@ export declare class FeedbackService {
             submittedAt: Date;
         };
         instructor: {
+            id: string;
             firstName: string | null;
             lastName: string | null;
-            id: string;
         };
     } & {
         id: string;
         createdAt: Date;
-        updatedAt: Date;
         instructorId: string;
+        updatedAt: Date;
         submissionId: string;
         comment: string;
         rating: number | null;
@@ -158,17 +158,17 @@ export declare class FeedbackService {
             } & {
                 id: string;
                 createdAt: Date;
-                updatedAt: Date;
                 courseId: string;
                 title: string;
                 description: string;
+                updatedAt: Date;
                 submissionType: string;
                 deadline: Date;
             };
             student: {
+                id: string;
                 firstName: string | null;
                 lastName: string | null;
-                id: string;
             };
         } & {
             id: string;
@@ -185,8 +185,8 @@ export declare class FeedbackService {
     } & {
         id: string;
         createdAt: Date;
-        updatedAt: Date;
         instructorId: string;
+        updatedAt: Date;
         submissionId: string;
         comment: string;
         rating: number | null;
@@ -202,10 +202,10 @@ export declare class FeedbackService {
             } & {
                 id: string;
                 createdAt: Date;
-                updatedAt: Date;
                 courseId: string;
                 title: string;
                 description: string;
+                updatedAt: Date;
                 submissionType: string;
                 deadline: Date;
             };
@@ -222,15 +222,15 @@ export declare class FeedbackService {
             submittedAt: Date;
         };
         instructor: {
+            id: string;
             firstName: string | null;
             lastName: string | null;
-            id: string;
         };
     } & {
         id: string;
         createdAt: Date;
-        updatedAt: Date;
         instructorId: string;
+        updatedAt: Date;
         submissionId: string;
         comment: string;
         rating: number | null;

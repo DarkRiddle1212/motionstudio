@@ -25,11 +25,11 @@ export declare class LessonService {
     } & {
         id: string;
         createdAt: Date;
-        updatedAt: Date;
         courseId: string;
         title: string;
         description: string;
         isPublished: boolean;
+        updatedAt: Date;
         content: string;
         videoUrl: string | null;
         fileUrls: string;
@@ -45,11 +45,11 @@ export declare class LessonService {
         };
         id: string;
         createdAt: Date;
-        updatedAt: Date;
         courseId: string;
         title: string;
         description: string;
         isPublished: boolean;
+        updatedAt: Date;
         content: string;
         videoUrl: string | null;
         order: number;
@@ -69,11 +69,11 @@ export declare class LessonService {
         };
         id: string;
         createdAt: Date;
-        updatedAt: Date;
         courseId: string;
         title: string;
         description: string;
         isPublished: boolean;
+        updatedAt: Date;
         content: string;
         videoUrl: string | null;
         order: number;
@@ -86,11 +86,11 @@ export declare class LessonService {
         };
         id: string;
         createdAt: Date;
-        updatedAt: Date;
         courseId: string;
         title: string;
         description: string;
         isPublished: boolean;
+        updatedAt: Date;
         content: string;
         videoUrl: string | null;
         order: number;

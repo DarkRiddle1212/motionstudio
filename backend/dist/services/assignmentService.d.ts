@@ -17,9 +17,9 @@ export declare class AssignmentService {
             id: string;
             title: string;
             instructor: {
+                id: string;
                 firstName: string | null;
                 lastName: string | null;
-                id: string;
             };
         };
         _count: {
@@ -28,10 +28,10 @@ export declare class AssignmentService {
     } & {
         id: string;
         createdAt: Date;
-        updatedAt: Date;
         courseId: string;
         title: string;
         description: string;
+        updatedAt: Date;
         submissionType: string;
         deadline: Date;
     }>;
@@ -46,10 +46,10 @@ export declare class AssignmentService {
     } & {
         id: string;
         createdAt: Date;
-        updatedAt: Date;
         courseId: string;
         title: string;
         description: string;
+        updatedAt: Date;
         submissionType: string;
         deadline: Date;
     })[]>;
@@ -67,10 +67,10 @@ export declare class AssignmentService {
     } & {
         id: string;
         createdAt: Date;
-        updatedAt: Date;
         courseId: string;
         title: string;
         description: string;
+        updatedAt: Date;
         submissionType: string;
         deadline: Date;
     }>;
@@ -79,9 +79,9 @@ export declare class AssignmentService {
             id: string;
             title: string;
             instructor: {
+                id: string;
                 firstName: string | null;
                 lastName: string | null;
-                id: string;
             };
         };
         _count: {
@@ -90,10 +90,10 @@ export declare class AssignmentService {
     } & {
         id: string;
         createdAt: Date;
-        updatedAt: Date;
         courseId: string;
         title: string;
         description: string;
+        updatedAt: Date;
         submissionType: string;
         deadline: Date;
     }>;
@@ -111,10 +111,10 @@ export declare class AssignmentService {
     } & {
         id: string;
         createdAt: Date;
-        updatedAt: Date;
         courseId: string;
         title: string;
         description: string;
+        updatedAt: Date;
         submissionType: string;
         deadline: Date;
     })[]>;
