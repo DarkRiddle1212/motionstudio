@@ -2,36 +2,17 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Motion Design Studio</title>
     
-    <!-- Performance optimizations -->
-    <meta name="theme-color" content="#2B2B2E" />
-    <link rel="manifest" href="/manifest.json" />
-    
-    <!-- Preconnect to external domains -->
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    
-    <!-- Optimized font loading with display=swap -->
-    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Inter:wght@400;500;600;700&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet" />
-    
-    <!-- DNS prefetch for potential external resources -->
-    <link rel="dns-prefetch" href="//api.stripe.com" />
-    <link rel="dns-prefetch" href="//js.stripe.com" />
-    
-    <!-- Critical CSS inlining placeholder (would be filled by build process) -->
+    <!-- Minimal critical CSS -->
     <style>
-      /* Critical CSS for above-the-fold content */
       html, body {
         margin: 0;
         padding: 0;
         width: 100%;
         overflow-x: hidden;
-      }
-      
-      body {
-        font-family: 'Inter', sans-serif;
+        font-family: Arial, sans-serif;
         background-color: #000000;
         color: #FFFFFF;
       }
@@ -41,42 +22,38 @@
         width: 100%;
       }
       
-      /* Loading spinner styles */
+      /* Simple loading spinner */
       .loading-spinner {
         display: flex;
         align-items: center;
         justify-content: center;
         min-height: 100vh;
         background-color: #000000;
+        flex-direction: column;
       }
       
       .spinner {
         width: 48px;
         height: 48px;
-        border: 2px solid #6B6B6B;
-        border-top: 2px solid #C89AA6;
+        border: 2px solid #333;
+        border-top: 2px solid #ec4899;
         border-radius: 50%;
         animation: spin 1s linear infinite;
+        margin-bottom: 16px;
       }
       
       @keyframes spin {
         0% { transform: rotate(0deg); }
         100% { transform: rotate(360deg); }
       }
+      
+      .loading-text {
+        color: #888;
+        font-size: 14px;
+      }
     </style>
-    
-    <title>Motion Design Studio</title>
-    
-    <!-- SEO and social media meta tags -->
-    <meta name="description" content="Professional motion design portfolio and comprehensive learning platform for motion design courses." />
-    <meta name="keywords" content="motion design, animation, portfolio, courses, learning platform" />
-    <meta property="og:title" content="Motion Design Studio Platform" />
-    <meta property="og:description" content="Professional motion design portfolio and comprehensive learning platform" />
-    <meta property="og:type" content="website" />
-    <meta name="twitter:card" content="summary_large_image" />
   </head>
   <body>
-    <!-- Fallback loading indicator -->
     <noscript>
       <div class="loading-spinner">
         <div>Please enable JavaScript to use this application.</div>
@@ -84,9 +61,9 @@
     </noscript>
     
     <div id="root">
-      <!-- Initial loading state -->
       <div class="loading-spinner">
         <div class="spinner"></div>
+        <div class="loading-text">Loading Motion Studio...</div>
       </div>
     </div>
     

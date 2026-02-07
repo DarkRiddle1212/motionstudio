@@ -40,3 +40,9 @@ prisma/migrations/
 .vite/
 .vercel
 .env*.local
+
+# Uploads (keep directory structure, ignore files)
+backend/uploads/**/*
+!backend/uploads/.gitkeep
+!backend/uploads/projects/
+backend/uploads/projects/**/*

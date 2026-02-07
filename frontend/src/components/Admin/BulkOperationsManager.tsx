@@ -68,7 +68,7 @@ const BulkOperationsManager: React.FC<BulkOperationsManagerProps> = ({
         }
       };
 
-      const response = await fetch('/api/admin/bulk-operations', {
+      const response = await fetch('${API_URL}/admin/bulk-operations', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

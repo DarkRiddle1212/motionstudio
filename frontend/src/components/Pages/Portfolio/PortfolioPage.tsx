@@ -8,6 +8,7 @@ import { Layout } from '../../Layout';
 
 type SortOption = 'order' | 'title' | 'newest' | 'oldest';
 type CategoryFilter = 'all' | string;
+type MediaTypeFilter = 'all' | 'image' | 'video';
 
 // Premium Project Card Component with sophisticated hover effects
 interface PremiumProjectCardProps {
@@ -17,15 +18,47 @@ interface PremiumProjectCardProps {
     description: string;
     toolsUsed: string[];
     thumbnailUrl: string;
+    caseStudyUrl: string;
+    mediaType: 'image' | 'video';
+    videoDuration?: number;
   };
   onClick: (id: string) => void;
   index: number;
 }
 
 const PremiumProjectCard = ({ project, onClick, index }: PremiumProjectCardProps) => {
+  const [isVideoHovered, setIsVideoHovered] = useState(false);
+  const [videoElement, setVideoElement] = useState<HTMLVideoElement | null>(null);
+
   const handleClick = useCallback(() => {
     onClick(project.id);
   }, [onClick, project.id]);
+
+  const handleMouseEnter = useCallback(() => {
+    if (project.mediaType === 'video' && videoElement) {
+      setIsVideoHovered(true);
+      // Start playing video on hover (muted)
+      videoElement.muted = true;
+      videoElement.currentTime = 0;
+      videoElement.play().catch(() => {
+        // Ignore play errors (autoplay restrictions)
+      });
+    }
+  }, [project.mediaType, videoElement]);
+
+  const handleMouseLeave = useCallback(() => {
+    if (project.mediaType === 'video' && videoElement) {
+      setIsVideoHovered(false);
+      videoElement.pause();
+      videoElement.currentTime = 0;
+    }
+  }, [project.mediaType, videoElement]);
+
+  const formatDuration = (seconds: number) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
+  };
 
   return (
     <motion.article
@@ -40,24 +73,74 @@ const PremiumProjectCard = ({ project, onClick, index }: PremiumProjectCardProps
       }}
       className="group cursor-pointer"
       onClick={handleClick}
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
       data-testid={`project-card-${project.id}`}
     >
       <div className="relative overflow-hidden rounded-xl bg-surface-card border border-white/5 shadow-card transition-all duration-500 ease-smooth hover:shadow-card-hover hover:border-brand-accent/20 hover:-translate-y-2">
-        {/* Image Container with Zoom Effect */}
+        {/* Image/Video Container with Zoom Effect */}
         <div className="relative aspect-[4/3] overflow-hidden">
-          <motion.img
-            src={project.thumbnailUrl}
-            alt={project.title}
-            className="w-full h-full object-cover transition-transform duration-700 ease-out-expo group-hover:scale-110"
-            loading="lazy"
-          />
+          {project.mediaType === 'video' ? (
+            <>
+              {/* Video Element (hidden, used for hover preview) */}
+              <video
+                ref={setVideoElement}
+                src={project.caseStudyUrl}
+                className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-500 ${
+                  isVideoHovered ? 'opacity-100' : 'opacity-0'
+                }`}
+                muted
+                loop
+                playsInline
+                preload="metadata"
+              />
+              
+              {/* Thumbnail Image (shown by default) */}
+              <motion.img
+                src={project.thumbnailUrl}
+                alt={project.title}
+                className={`w-full h-full object-cover transition-all duration-700 ease-out-expo group-hover:scale-110 ${
+                  isVideoHovered ? 'opacity-0' : 'opacity-100'
+                }`}
+                loading="lazy"
+              />
+              
+              {/* Play Icon Overlay */}
+              <div className={`absolute inset-0 flex items-center justify-center transition-opacity duration-300 ${
+                isVideoHovered ? 'opacity-0' : 'opacity-100'
+              }`}>
+                <div className="w-16 h-16 bg-black/50 backdrop-blur-sm rounded-full flex items-center justify-center border border-white/20 group-hover:scale-110 transition-transform duration-300">
+                  <svg className="w-6 h-6 text-white ml-1" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M8 5v14l11-7z"/>
+                  </svg>
+                </div>
+              </div>
+              
+              {/* Duration Badge */}
+              {project.videoDuration && (
+                <div className="absolute top-3 right-3 px-2 py-1 bg-black/70 backdrop-blur-sm text-white text-xs rounded-md border border-white/20">
+                  {formatDuration(project.videoDuration)}
+                </div>
+              )}
+            </>
+          ) : (
+            <motion.img
+              src={project.thumbnailUrl}
+              alt={project.title}
+              className="w-full h-full object-cover transition-transform duration-700 ease-out-expo group-hover:scale-110"
+              loading="lazy"
+            />
+          )}
+          
           {/* Gradient Overlay */}
           <div className="absolute inset-0 bg-gradient-overlay opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
           
           {/* Hover Content Overlay */}
           <div className="absolute inset-0 flex items-end p-6 opacity-0 group-hover:opacity-100 transition-all duration-500 translate-y-4 group-hover:translate-y-0">
             <div className="flex items-center gap-2 text-white font-medium">
-              <span className="text-body-sm">View Case Study</span>
+              <span className="text-body-sm">
+                {project.mediaType === 'video' ? 'Watch Video' : 'View Case Study'}
+              </span>
               <svg 
                 className="w-4 h-4 transition-transform duration-300 group-hover:translate-x-1" 
                 fill="none" 
@@ -71,6 +154,11 @@ const PremiumProjectCard = ({ project, onClick, index }: PremiumProjectCardProps
           
           {/* Accent Glow on Hover */}
           <div className="absolute inset-0 bg-gradient-accent-glow opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
+          
+          {/* Media Type Badge */}
+          <div className="absolute top-3 left-3 px-2 py-1 bg-surface-elevated/80 backdrop-blur-sm text-brand-secondary-text text-xs rounded-md border border-white/10">
+            {project.mediaType === 'video' ? '🎬 Video' : '🖼️ Image'}
+          </div>
         </div>
 
         {/* Content */}
@@ -135,6 +223,7 @@ const PortfolioPage = () => {
   const { projects, loading, error } = useProjects();
   const [sortBy, setSortBy] = useState<SortOption>('order');
   const [activeCategory, setActiveCategory] = useState<CategoryFilter>('all');
+  const [mediaTypeFilter, setMediaTypeFilter] = useState<MediaTypeFilter>('all');
 
   // Get unique categories (tools) for filtering
   const categories = useMemo(() => {
@@ -158,6 +247,11 @@ const PortfolioPage = () => {
       );
     }
 
+    // Apply media type filter
+    if (mediaTypeFilter !== 'all') {
+      filtered = filtered.filter(project => project.mediaType === mediaTypeFilter);
+    }
+
     // Apply sorting
     const sorted = [...filtered].sort((a, b) => {
       switch (sortBy) {
@@ -175,7 +269,7 @@ const PortfolioPage = () => {
     });
 
     return sorted;
-  }, [projects, sortBy, activeCategory]);
+  }, [projects, sortBy, activeCategory, mediaTypeFilter]);
 
   const handleProjectClick = useCallback((projectId: string) => {
     navigate(`/portfolio/${projectId}`);
@@ -183,6 +277,10 @@ const PortfolioPage = () => {
 
   const handleCategoryChange = useCallback((category: string) => {
     setActiveCategory(category);
+  }, []);
+
+  const handleMediaTypeChange = useCallback((mediaType: MediaTypeFilter) => {
+    setMediaTypeFilter(mediaType);
   }, []);
 
   if (loading) {
@@ -259,35 +357,66 @@ const PortfolioPage = () => {
         <div className="container-premium">
           <FadeIn delay={0.3}>
             <div className="bg-surface-elevated/80 backdrop-blur-xl rounded-2xl border border-white/5 p-6 shadow-premium">
-              <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
-                {/* Category Filters */}
-                <div className="flex flex-wrap gap-2" role="group" aria-label="Filter by category">
-                  {categories.slice(0, 8).map((category) => (
+              <div className="flex flex-col gap-6">
+                {/* Media Type Filters */}
+                <div className="flex flex-col gap-3">
+                  <label className="text-body-sm text-brand-secondary-text font-medium">
+                    Media Type:
+                  </label>
+                  <div className="flex flex-wrap gap-2" role="group" aria-label="Filter by media type">
                     <FilterButton
-                      key={category}
-                      label={category === 'all' ? 'All Projects' : category}
-                      isActive={activeCategory === category}
-                      onClick={() => handleCategoryChange(category)}
+                      label="All Media"
+                      isActive={mediaTypeFilter === 'all'}
+                      onClick={() => handleMediaTypeChange('all')}
                     />
-                  ))}
+                    <FilterButton
+                      label="🖼️ Images"
+                      isActive={mediaTypeFilter === 'image'}
+                      onClick={() => handleMediaTypeChange('image')}
+                    />
+                    <FilterButton
+                      label="🎬 Videos"
+                      isActive={mediaTypeFilter === 'video'}
+                      onClick={() => handleMediaTypeChange('video')}
+                    />
+                  </div>
                 </div>
 
-                {/* Sort Dropdown */}
-                <div className="flex items-center gap-3">
-                  <label className="text-body-sm text-brand-secondary-text whitespace-nowrap">
-                    Sort by:
-                  </label>
-                  <select
-                    value={sortBy}
-                    onChange={(e) => setSortBy(e.target.value as SortOption)}
-                    className="px-4 py-2 bg-surface-card border border-white/10 rounded-lg text-brand-primary-text text-body-sm focus:outline-none focus:ring-2 focus:ring-brand-accent/50 focus:border-brand-accent transition-all duration-300 cursor-pointer"
-                    data-testid="sort-select"
-                  >
-                    <option value="order">Featured</option>
-                    <option value="title">Title (A-Z)</option>
-                    <option value="newest">Newest First</option>
-                    <option value="oldest">Oldest First</option>
-                  </select>
+                <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
+                  {/* Category Filters */}
+                  <div className="flex flex-col gap-3">
+                    <label className="text-body-sm text-brand-secondary-text font-medium">
+                      Tools & Categories:
+                    </label>
+                    <div className="flex flex-wrap gap-2" role="group" aria-label="Filter by category">
+                      {categories.slice(0, 8).map((category) => (
+                        <FilterButton
+                          key={category}
+                          label={category === 'all' ? 'All Projects' : category}
+                          isActive={activeCategory === category}
+                          onClick={() => handleCategoryChange(category)}
+                        />
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Sort Dropdown */}
+                  <div className="flex items-center gap-3">
+                    <label className="text-body-sm text-brand-secondary-text whitespace-nowrap">
+                      Sort by:
+                    </label>
+                    <select
+                      value={sortBy}
+                      onChange={(e) => setSortBy(e.target.value as SortOption)}
+                      className="px-4 py-2 bg-surface-card border border-white/10 rounded-lg text-brand-primary-text text-body-sm focus:outline-none focus:ring-2 focus:ring-brand-accent/50 focus:border-brand-accent transition-all duration-300 cursor-pointer"
+                      data-testid="sort-select"
+                    >
+                      <option value="order">Featured</option>
+                      <option value="title">Title (A-Z)</option>
+                      <option value="newest">Newest First</option>
+                      <option value="oldest">Oldest First</option>
+                    </select>
+                  </div>
                 </div>
               </div>
             </div>
@@ -301,21 +430,28 @@ const PortfolioPage = () => {
           <FadeIn>
             <div className="text-center py-20">
               <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-surface-elevated flex items-center justify-center">
-                <span className="text-4xl">🎨</span>
+                <span className="text-4xl">
+                  {mediaTypeFilter === 'video' ? '🎬' : mediaTypeFilter === 'image' ? '🖼️' : '🎨'}
+                </span>
               </div>
               <h2 className="text-display-sm font-serif font-semibold text-brand-primary-text mb-4">
-                {activeCategory !== 'all' ? 'No Projects Found' : 'No Projects Available'}
+                {(activeCategory !== 'all' || mediaTypeFilter !== 'all') ? 'No Projects Found' : 'No Projects Available'}
               </h2>
               <p className="text-body-md text-brand-secondary-text mb-8 max-w-md mx-auto">
-                {activeCategory !== 'all'
-                  ? `No projects found using "${activeCategory}". Try a different filter.`
+                {(activeCategory !== 'all' || mediaTypeFilter !== 'all')
+                  ? `No projects found matching your filters. Try adjusting your selection.`
                   : 'Check back soon for new projects!'
                 }
               </p>
-              {activeCategory !== 'all' && (
-                <Button onClick={() => setActiveCategory('all')}>
-                  View All Projects
-                </Button>
+              {(activeCategory !== 'all' || mediaTypeFilter !== 'all') && (
+                <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                  <Button onClick={() => setActiveCategory('all')}>
+                    Clear Category Filter
+                  </Button>
+                  <Button variant="secondary" onClick={() => setMediaTypeFilter('all')}>
+                    Clear Media Filter
+                  </Button>
+                </div>
               )}
             </div>
           </FadeIn>
@@ -325,8 +461,17 @@ const PortfolioPage = () => {
             <div className="mb-8">
               <p className="text-body-sm text-brand-secondary-text">
                 Showing <span className="text-brand-primary-text font-medium">{filteredAndSortedProjects.length}</span> project{filteredAndSortedProjects.length !== 1 ? 's' : ''}
-                {activeCategory !== 'all' && (
-                  <> in <span className="text-brand-accent">{activeCategory}</span></>
+                {(activeCategory !== 'all' || mediaTypeFilter !== 'all') && (
+                  <>
+                    {' '}filtered by{' '}
+                    {mediaTypeFilter !== 'all' && (
+                      <span className="text-brand-accent">{mediaTypeFilter}</span>
+                    )}
+                    {activeCategory !== 'all' && mediaTypeFilter !== 'all' && ' and '}
+                    {activeCategory !== 'all' && (
+                      <span className="text-brand-accent">{activeCategory}</span>
+                    )}
+                  </>
                 )}
               </p>
             </div>
@@ -340,7 +485,16 @@ const PortfolioPage = () => {
                 {filteredAndSortedProjects.map((project, index) => (
                   <PremiumProjectCard
                     key={project.id}
-                    project={project}
+                    project={{
+                      id: project.id,
+                      title: project.title,
+                      description: project.description,
+                      toolsUsed: project.toolsUsed,
+                      thumbnailUrl: project.thumbnailUrl,
+                      caseStudyUrl: project.caseStudyUrl,
+                      mediaType: project.mediaType,
+                      videoDuration: project.videoDuration,
+                    }}
                     onClick={handleProjectClick}
                     index={index}
                   />

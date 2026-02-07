@@ -6,6 +6,8 @@ import { Layout } from '../../Layout';
 import { Button, Input, Textarea } from '../../Common';
 import { staggerContainerVariants, slideUpVariants } from '../../../utils/animationVariants';
 
+const API_URL = (import.meta as any).env?.VITE_API_URL || 'http://localhost:5001/api';
+
 interface ContactFormData {
   name: string;
   email: string;
@@ -125,7 +127,7 @@ const ContactPage = () => {
     setSubmitMessage(null);
 
     try {
-      const response = await fetch('/api/contact/contact', {
+      const response = await fetch(`${API_URL}/contact/contact`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -157,7 +159,7 @@ const ContactPage = () => {
     setSubmitMessage(null);
 
     try {
-      const response = await fetch('/api/contact/project-inquiry', {
+      const response = await fetch(`${API_URL}/contact/project-inquiry`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

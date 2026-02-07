@@ -189,8 +189,26 @@ model Project {
   solution        String
   motionBreakdown String
   toolsUsed       String
+  
+  // Legacy URL fields (backward compatible)
   thumbnailUrl    String
   caseStudyUrl    String
+  
+  // New file path fields for uploaded media
+  thumbnailPath       String?  // Server path for uploaded thumbnail
+  caseStudyPath       String?  // Server path for uploaded hero image
+  
+  // Media type selection
+  mediaType           String   @default("image") // "image" or "video"
+  
+  // Video-specific fields
+  videoPath           String?  // Server path for uploaded video
+  videoThumbnailPath  String?  // Auto-generated video thumbnail
+  videoDuration       Float?   // Video duration in seconds
+  
+  // Gallery images
+  galleryImages       String   @default("[]") // JSON array of image paths
+  
   order           Int
   isPublished     Boolean  @default(false)
   createdAt       DateTime @default(now())

@@ -1,10 +1,296 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useProjects, Project } from '../../../hooks/useProjects';
 import { Button } from '../../Common';
 import { FadeIn, SlideUp, Parallax, StaggerContainer, StaggerItem } from '../../Animation';
 import { Layout } from '../../Layout';
+
+// Video Player Component with Custom Controls
+interface VideoPlayerProps {
+  src: string;
+  poster: string;
+  title: string;
+}
+
+const VideoPlayer = ({ src, poster, title }: VideoPlayerProps) => {
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [isMuted, setIsMuted] = useState(true);
+  const [volume, setVolume] = useState(0.7);
+  const [currentTime, setCurrentTime] = useState(0);
+  const [duration, setDuration] = useState(0);
+  const [showControls, setShowControls] = useState(false);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const controlsTimeoutRef = useRef<NodeJS.Timeout>();
+
+  // Auto-play and loop setup
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video) return;
+
+    const handleLoadedMetadata = () => {
+      setDuration(video.duration);
+      // Auto-play muted
+      video.muted = true;
+      video.play().catch(() => {
+        // Ignore autoplay restrictions
+      });
+    };
+
+    const handleTimeUpdate = () => {
+      setCurrentTime(video.currentTime);
+    };
+
+    const handlePlay = () => setIsPlaying(true);
+    const handlePause = () => setIsPlaying(false);
+    const handleEnded = () => {
+      // Loop the video
+      video.currentTime = 0;
+      video.play();
+    };
+
+    video.addEventListener('loadedmetadata', handleLoadedMetadata);
+    video.addEventListener('timeupdate', handleTimeUpdate);
+    video.addEventListener('play', handlePlay);
+    video.addEventListener('pause', handlePause);
+    video.addEventListener('ended', handleEnded);
+
+    return () => {
+      video.removeEventListener('loadedmetadata', handleLoadedMetadata);
+      video.removeEventListener('timeupdate', handleTimeUpdate);
+      video.removeEventListener('play', handlePlay);
+      video.removeEventListener('pause', handlePause);
+      video.removeEventListener('ended', handleEnded);
+    };
+  }, []);
+
+  // Handle volume changes
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video) return;
+    
+    video.volume = volume;
+    video.muted = isMuted;
+  }, [volume, isMuted]);
+
+  // Controls visibility management
+  const showControlsTemporarily = useCallback(() => {
+    setShowControls(true);
+    if (controlsTimeoutRef.current) {
+      clearTimeout(controlsTimeoutRef.current);
+    }
+    controlsTimeoutRef.current = setTimeout(() => {
+      setShowControls(false);
+    }, 3000);
+  }, []);
+
+  const handleMouseMove = useCallback(() => {
+    showControlsTemporarily();
+  }, [showControlsTemporarily]);
+
+  const handleMouseEnter = useCallback(() => {
+    setShowControls(true);
+  }, []);
+
+  const handleMouseLeave = useCallback(() => {
+    if (controlsTimeoutRef.current) {
+      clearTimeout(controlsTimeoutRef.current);
+    }
+    setShowControls(false);
+  }, []);
+
+  // Control handlers
+  const togglePlayPause = useCallback(() => {
+    const video = videoRef.current;
+    if (!video) return;
+
+    if (isPlaying) {
+      video.pause();
+    } else {
+      video.play();
+    }
+  }, [isPlaying]);
+
+  const toggleMute = useCallback(() => {
+    setIsMuted(!isMuted);
+  }, [isMuted]);
+
+  const handleVolumeChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const newVolume = parseFloat(e.target.value);
+    setVolume(newVolume);
+    if (newVolume > 0) {
+      setIsMuted(false);
+    }
+  }, []);
+
+  const handleSeek = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const video = videoRef.current;
+    if (!video) return;
+
+    const newTime = (parseFloat(e.target.value) / 100) * duration;
+    video.currentTime = newTime;
+    setCurrentTime(newTime);
+  }, [duration]);
+
+  const toggleFullscreen = useCallback(() => {
+    const video = videoRef.current;
+    if (!video) return;
+
+    if (!isFullscreen) {
+      if (video.requestFullscreen) {
+        video.requestFullscreen();
+      }
+    } else {
+      if (document.exitFullscreen) {
+        document.exitFullscreen();
+      }
+    }
+  }, [isFullscreen]);
+
+  // Fullscreen change handler
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      setIsFullscreen(!!document.fullscreenElement);
+    };
+
+    document.addEventListener('fullscreenchange', handleFullscreenChange);
+    return () => document.removeEventListener('fullscreenchange', handleFullscreenChange);
+  }, []);
+
+  const formatTime = (time: number) => {
+    const minutes = Math.floor(time / 60);
+    const seconds = Math.floor(time % 60);
+    return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+  };
+
+  const progressPercentage = duration > 0 ? (currentTime / duration) * 100 : 0;
+
+  return (
+    <div 
+      className="relative w-full h-full group"
+      onMouseMove={handleMouseMove}
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
+    >
+      <video
+        ref={videoRef}
+        src={src}
+        poster={poster}
+        className="w-full h-full object-cover"
+        loop
+        playsInline
+        preload="metadata"
+        aria-label={`Video: ${title}`}
+      />
+
+      {/* Custom Controls Overlay */}
+      <AnimatePresence>
+        {showControls && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.3 }}
+            className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent pointer-events-none"
+          >
+            {/* Bottom Controls */}
+            <div className="absolute bottom-0 left-0 right-0 p-6 pointer-events-auto">
+              <div className="bg-black/40 backdrop-blur-md rounded-xl border border-white/10 p-4">
+                {/* Progress Bar */}
+                <div className="mb-4">
+                  <input
+                    type="range"
+                    min="0"
+                    max="100"
+                    value={progressPercentage}
+                    onChange={handleSeek}
+                    className="w-full h-1 bg-white/20 rounded-lg appearance-none cursor-pointer slider-thumb"
+                    aria-label="Video progress"
+                  />
+                </div>
+
+                {/* Control Buttons */}
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-4">
+                    {/* Play/Pause Button */}
+                    <button
+                      onClick={togglePlayPause}
+                      className="w-10 h-10 bg-white/20 hover:bg-white/30 rounded-full flex items-center justify-center transition-colors duration-200"
+                      aria-label={isPlaying ? 'Pause video' : 'Play video'}
+                    >
+                      {isPlaying ? (
+                        <svg className="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 24 24">
+                          <path d="M6 4h4v16H6V4zm8 0h4v16h-4V4z"/>
+                        </svg>
+                      ) : (
+                        <svg className="w-5 h-5 text-white ml-0.5" fill="currentColor" viewBox="0 0 24 24">
+                          <path d="M8 5v14l11-7z"/>
+                        </svg>
+                      )}
+                    </button>
+
+                    {/* Volume Controls */}
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={toggleMute}
+                        className="w-8 h-8 bg-white/20 hover:bg-white/30 rounded-full flex items-center justify-center transition-colors duration-200"
+                        aria-label={isMuted ? 'Unmute video' : 'Mute video'}
+                      >
+                        {isMuted || volume === 0 ? (
+                          <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M16.5 12c0-1.77-1.02-3.29-2.5-4.03v2.21l2.45 2.45c.03-.2.05-.41.05-.63zm2.5 0c0 .94-.2 1.82-.54 2.64l1.51 1.51C20.63 14.91 21 13.5 21 12c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71zM4.27 3L3 4.27 7.73 9H3v6h4l5 5v-6.73l4.25 4.25c-.67.52-1.42.93-2.25 1.18v2.06c1.38-.31 2.63-.95 3.69-1.81L19.73 21 21 19.73l-9-9L4.27 3zM12 4L9.91 6.09 12 8.18V4z"/>
+                          </svg>
+                        ) : (
+                          <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/>
+                          </svg>
+                        )}
+                      </button>
+                      
+                      <input
+                        type="range"
+                        min="0"
+                        max="1"
+                        step="0.1"
+                        value={isMuted ? 0 : volume}
+                        onChange={handleVolumeChange}
+                        className="w-16 h-1 bg-white/20 rounded-lg appearance-none cursor-pointer slider-thumb"
+                        aria-label="Volume control"
+                      />
+                    </div>
+
+                    {/* Time Display */}
+                    <div className="text-white text-sm font-mono">
+                      {formatTime(currentTime)} / {formatTime(duration)}
+                    </div>
+                  </div>
+
+                  {/* Fullscreen Button */}
+                  <button
+                    onClick={toggleFullscreen}
+                    className="w-8 h-8 bg-white/20 hover:bg-white/30 rounded-full flex items-center justify-center transition-colors duration-200"
+                    aria-label={isFullscreen ? 'Exit fullscreen' : 'Enter fullscreen'}
+                  >
+                    {isFullscreen ? (
+                      <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M5 16h3v3h2v-5H5v2zm3-8H5v2h5V5H8v3zm6 11h2v-3h3v-2h-5v5zm2-11V5h-2v5h5V8h-3z"/>
+                      </svg>
+                    ) : (
+                      <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/>
+                      </svg>
+                    )}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+};
 
 // Lightbox Component for Image Gallery
 interface LightboxProps {
@@ -18,6 +304,37 @@ interface LightboxProps {
 }
 
 const Lightbox = ({ images, currentIndex, isOpen, onClose, onNext, onPrev, projectTitle }: LightboxProps) => {
+  // Touch/swipe handling for mobile
+  const [touchStart, setTouchStart] = useState<number | null>(null);
+  const [touchEnd, setTouchEnd] = useState<number | null>(null);
+
+  // Minimum swipe distance (in px)
+  const minSwipeDistance = 50;
+
+  const onTouchStart = (e: React.TouchEvent) => {
+    setTouchEnd(null); // Reset touchEnd
+    setTouchStart(e.targetTouches[0].clientX);
+  };
+
+  const onTouchMove = (e: React.TouchEvent) => {
+    setTouchEnd(e.targetTouches[0].clientX);
+  };
+
+  const onTouchEnd = () => {
+    if (!touchStart || !touchEnd) return;
+    
+    const distance = touchStart - touchEnd;
+    const isLeftSwipe = distance > minSwipeDistance;
+    const isRightSwipe = distance < -minSwipeDistance;
+
+    if (isLeftSwipe && images.length > 1) {
+      onNext();
+    }
+    if (isRightSwipe && images.length > 1) {
+      onPrev();
+    }
+  };
+
   // Handle keyboard navigation
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -53,6 +370,9 @@ const Lightbox = ({ images, currentIndex, isOpen, onClose, onNext, onPrev, proje
           transition={{ duration: 0.3 }}
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/95 backdrop-blur-xl"
           onClick={onClose}
+          onTouchStart={onTouchStart}
+          onTouchMove={onTouchMove}
+          onTouchEnd={onTouchEnd}
           role="dialog"
           aria-modal="true"
           aria-label={`Image gallery for ${projectTitle}`}
@@ -109,10 +429,39 @@ const Lightbox = ({ images, currentIndex, isOpen, onClose, onNext, onPrev, proje
             />
           </motion.div>
 
-          {/* Image Counter */}
+          {/* Image Counter and Thumbnail Strip */}
           {images.length > 1 && (
-            <div className="absolute bottom-6 left-1/2 -translate-x-1/2 px-4 py-2 rounded-full bg-surface-elevated/80 text-brand-secondary-text text-body-sm">
-              {currentIndex + 1} / {images.length}
+            <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex flex-col items-center gap-4">
+              {/* Image Counter */}
+              <div className="px-4 py-2 rounded-full bg-surface-elevated/80 text-brand-secondary-text text-body-sm">
+                {currentIndex + 1} / {images.length}
+              </div>
+              
+              {/* Thumbnail Strip */}
+              <div className="flex gap-2 max-w-md overflow-x-auto scrollbar-hide">
+                {images.map((image, index) => (
+                  <button
+                    key={index}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      // Update current index when thumbnail is clicked
+                      const event = new CustomEvent('thumbnailClick', { detail: index });
+                      window.dispatchEvent(event);
+                    }}
+                    className={`flex-shrink-0 w-12 h-8 rounded overflow-hidden border-2 transition-all duration-200 ${
+                      index === currentIndex 
+                        ? 'border-brand-accent shadow-glow' 
+                        : 'border-white/20 hover:border-white/40'
+                    }`}
+                  >
+                    <img
+                      src={image}
+                      alt={`Thumbnail ${index + 1}`}
+                      className="w-full h-full object-cover"
+                    />
+                  </button>
+                ))}
+              </div>
             </div>
           )}
         </motion.div>
@@ -195,6 +544,44 @@ const CaseStudyPage = () => {
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
+  // Add custom styles for video controls
+  useEffect(() => {
+    const style = document.createElement('style');
+    style.textContent = `
+      .slider-thumb::-webkit-slider-thumb {
+        appearance: none;
+        width: 16px;
+        height: 16px;
+        border-radius: 50%;
+        background: #ffffff;
+        cursor: pointer;
+        border: 2px solid #6366f1;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+      }
+      .slider-thumb::-moz-range-thumb {
+        width: 16px;
+        height: 16px;
+        border-radius: 50%;
+        background: #ffffff;
+        cursor: pointer;
+        border: 2px solid #6366f1;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+      }
+      .scrollbar-hide {
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+      }
+      .scrollbar-hide::-webkit-scrollbar {
+        display: none;
+      }
+    `;
+    document.head.appendChild(style);
+    
+    return () => {
+      document.head.removeChild(style);
+    };
+  }, []);
+
   useEffect(() => {
     const fetchProject = async () => {
       if (!projectId) {
@@ -219,11 +606,32 @@ const CaseStudyPage = () => {
     fetchProject();
   }, [projectId, getProjectById]);
 
+  // Handle thumbnail clicks from lightbox
+  useEffect(() => {
+    const handleThumbnailClick = (event: CustomEvent) => {
+      setCurrentImageIndex(event.detail);
+    };
+
+    window.addEventListener('thumbnailClick', handleThumbnailClick as EventListener);
+    return () => {
+      window.removeEventListener('thumbnailClick', handleThumbnailClick as EventListener);
+    };
+  }, []);
+
   // Generate gallery images from project data
   const galleryImages = project ? [
-    project.caseStudyUrl,
-    project.thumbnailUrl,
-    // Add placeholder images for demo - in production these would come from the API
+    // Hero/case study image or video thumbnail
+    project.mediaType === 'video' ? project.thumbnailUrl : project.caseStudyUrl,
+    // Thumbnail (if different from hero)
+    ...(project.thumbnailUrl !== project.caseStudyUrl ? [project.thumbnailUrl] : []),
+    // Parse gallery images from JSON string
+    ...(project.galleryImages ? JSON.parse(project.galleryImages) : []),
+    // Add some demo images for video projects to show gallery functionality
+    ...(project.mediaType === 'video' ? [
+      'https://images.unsplash.com/photo-1611224923853-80b023f02d71?w=800&h=600&fit=crop',
+      'https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=800&h=600&fit=crop',
+      'https://images.unsplash.com/photo-1574717024653-61fd2cf4d44d?w=800&h=600&fit=crop'
+    ] : [])
   ].filter(Boolean) : [];
 
   const openLightbox = useCallback((index: number) => {
@@ -284,14 +692,22 @@ const CaseStudyPage = () => {
 
       {/* Full-Width Hero Section */}
       <section className="relative min-h-[70vh] md:min-h-[80vh] overflow-hidden">
-        {/* Hero Image with Parallax */}
+        {/* Hero Media with Parallax */}
         <Parallax speed={0.3} className="absolute inset-0">
           <div className="absolute inset-0">
-            <img
-              src={project.caseStudyUrl}
-              alt={project.title}
-              className="w-full h-full object-cover"
-            />
+            {project.mediaType === 'video' ? (
+              <VideoPlayer
+                src={project.caseStudyUrl}
+                poster={project.thumbnailUrl}
+                title={project.title}
+              />
+            ) : (
+              <img
+                src={project.caseStudyUrl}
+                alt={project.title}
+                className="w-full h-full object-cover"
+              />
+            )}
             {/* Gradient Overlays */}
             <div className="absolute inset-0 bg-gradient-overlay-full" />
             <div className="absolute inset-0 bg-gradient-hero-radial opacity-50" />

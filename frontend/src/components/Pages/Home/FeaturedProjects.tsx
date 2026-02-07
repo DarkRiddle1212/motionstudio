@@ -181,6 +181,9 @@ const FeaturedProjects = () => {
   const navigate = useNavigate();
   const { projects, loading } = useProjects();
   
+  // Debug logging
+  console.log('FeaturedProjects - loading:', loading, 'projects:', projects);
+  
   // Get first 3 projects for featured section
   const featuredProjects = projects?.slice(0, 3) || [];
 

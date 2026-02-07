@@ -76,7 +76,7 @@ const UserManagement = () => {
         params.append('sortOrder', sorting.direction || 'desc');
       }
 
-      const response = await fetch(`${API_URL}/api/admin/users?${params}`, {
+      const response = await fetch(`${API_URL}/admin/users?${params}`, {
         headers: {
           'Authorization': `Bearer ${token}`,
         },
@@ -130,7 +130,7 @@ const UserManagement = () => {
     if (!token) return;
     
     for (const user of selectedUsers) {
-      await fetch(`${API_URL}/api/admin/users/${user.id}/suspend`, {
+      await fetch(`${API_URL}/admin/users/${user.id}/suspend`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -145,7 +145,7 @@ const UserManagement = () => {
     if (!token) return;
     
     for (const user of selectedUsers) {
-      await fetch(`${API_URL}/api/admin/users/${user.id}/activate`, {
+      await fetch(`${API_URL}/admin/users/${user.id}/activate`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -160,7 +160,7 @@ const UserManagement = () => {
     if (!token) return;
     
     const userIds = selectedUsers.map(u => u.id);
-    await fetch(`${API_URL}/api/admin/users/bulk-update`, {
+    await fetch(`${API_URL}/admin/users/bulk-update`, {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${token}`,
@@ -181,7 +181,7 @@ const UserManagement = () => {
     if (!token) return;
     
     const userIds = selectedUsers.map(u => u.id);
-    await fetch(`${API_URL}/api/admin/users/bulk-update`, {
+    await fetch(`${API_URL}/admin/users/bulk-update`, {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${token}`,
@@ -202,7 +202,7 @@ const UserManagement = () => {
     if (!token) return;
     
     const userIds = selectedUsers.map(u => u.id);
-    await fetch(`${API_URL}/api/admin/users/bulk-update`, {
+    await fetch(`${API_URL}/admin/users/bulk-update`, {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${token}`,
@@ -360,7 +360,7 @@ const UserManagement = () => {
       icon: BulkActionIcons.Export,
       action: async (users) => {
         const userIds = users.map(u => u.id);
-        const response = await fetch(`${API_URL}/api/admin/data/export`, {
+        const response = await fetch(`${API_URL}/admin/data/export`, {
           method: 'POST',
           headers: {
             'Authorization': `Bearer ${token}`,
@@ -533,7 +533,7 @@ const CreateUserModal = ({ onClose, onSuccess, token }: CreateUserModalProps) =>
     setError(null);
 
     try {
-      const response = await fetch(`${API_URL}/api/admin/users`, {
+      const response = await fetch(`${API_URL}/admin/users`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -673,7 +673,7 @@ const EditUserModal = ({ user, onClose, onSuccess, token }: EditUserModalProps) 
     setError(null);
 
     try {
-      const response = await fetch(`${API_URL}/api/admin/users/${user.id}`, {
+      const response = await fetch(`${API_URL}/admin/users/${user.id}`, {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -703,7 +703,7 @@ const EditUserModal = ({ user, onClose, onSuccess, token }: EditUserModalProps) 
 
     try {
       const endpoint = user.emailVerified ? 'suspend' : 'activate';
-      const response = await fetch(`${API_URL}/api/admin/users/${user.id}/${endpoint}`, {
+      const response = await fetch(`${API_URL}/admin/users/${user.id}/${endpoint}`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -821,3 +821,4 @@ const EditUserModal = ({ user, onClose, onSuccess, token }: EditUserModalProps) 
 };
 
 export default UserManagement;
+

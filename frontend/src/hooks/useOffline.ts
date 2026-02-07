@@ -1,5 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 
+const API_URL = (import.meta as any).env?.VITE_API_URL || 'http://localhost:5001/api';
+
 interface OfflineOptions {
   pingUrl?: string;
   pingInterval?: number;
@@ -16,7 +18,7 @@ interface OfflineOptions {
  */
 export const useOffline = (options: OfflineOptions = {}) => {
   const {
-    pingUrl = '/api/health',
+    pingUrl = `${API_URL}/health`,
     pingInterval = 30000, // 30 seconds
     timeout = 5000, // 5 seconds
     onOnline,

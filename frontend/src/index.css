@@ -1402,6 +1402,53 @@ h1, h2, h3, h4, h5, h6 {
     animation: spin 1s linear infinite;
   }
   
+  /* Premium Loading Spinner with Glow */
+  .spinner-premium {
+    width: 32px;
+    height: 32px;
+    border: 3px solid rgba(246, 193, 204, 0.1);
+    border-top: 3px solid var(--color-accent);
+    border-radius: 50%;
+    animation: spin 1s cubic-bezier(0.68, -0.55, 0.265, 1.55) infinite;
+    box-shadow: 0 0 20px rgba(246, 193, 204, 0.3);
+  }
+  
+  /* Pulsing Dot Loader */
+  .loader-dots {
+    display: flex;
+    gap: 4px;
+    align-items: center;
+  }
+  
+  .loader-dots::before,
+  .loader-dots::after {
+    content: '';
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--color-accent);
+    animation: pulse-dot 1.4s ease-in-out infinite both;
+  }
+  
+  .loader-dots::before {
+    animation-delay: -0.32s;
+  }
+  
+  .loader-dots::after {
+    animation-delay: -0.16s;
+  }
+  
+  @keyframes pulse-dot {
+    0%, 80%, 100% {
+      transform: scale(0);
+      opacity: 0.5;
+    }
+    40% {
+      transform: scale(1);
+      opacity: 1;
+    }
+  }
+  
   /* Modern Tooltip */
   .tooltip-modern {
     position: relative;
@@ -1528,6 +1575,72 @@ h1, h2, h3, h4, h5, h6 {
     }
   }
   
+  /* Premium Success Animation */
+  .success-bounce {
+    animation: successBounce 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55) forwards;
+  }
+  
+  @keyframes successBounce {
+    0% {
+      transform: scale(0) rotate(0deg);
+      opacity: 0;
+    }
+    50% {
+      transform: scale(1.2) rotate(180deg);
+      opacity: 1;
+    }
+    100% {
+      transform: scale(1) rotate(360deg);
+      opacity: 1;
+    }
+  }
+  
+  /* Confetti Animation */
+  .confetti {
+    position: relative;
+    overflow: hidden;
+  }
+  
+  .confetti::before {
+    content: '🎉';
+    position: absolute;
+    top: -20px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 2rem;
+    animation: confettiFall 2s ease-out forwards;
+    opacity: 0;
+  }
+  
+  @keyframes confettiFall {
+    0% {
+      transform: translateX(-50%) translateY(-20px) rotate(0deg);
+      opacity: 1;
+    }
+    100% {
+      transform: translateX(-50%) translateY(100px) rotate(360deg);
+      opacity: 0;
+    }
+  }
+  
+  /* Micro-interaction: Button Press */
+  .btn-press {
+    transition: all 0.1s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  
+  .btn-press:active {
+    transform: scale(0.98);
+  }
+  
+  /* Micro-interaction: Card Tilt */
+  .card-tilt {
+    transition: transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  }
+  
+  .card-tilt:hover {
+    transform: perspective(1000px) rotateX(2deg) rotateY(2deg);
+  }
+  
   .stagger-children > * {
     animation-delay: calc(var(--stagger-delay, 0.1s) * var(--index, 0));
   }
@@ -1548,6 +1661,65 @@ h1, h2, h3, h4, h5, h6 {
   
   .hover-scale-modern:hover {
     transform: scale(1.02);
+  }
+  
+  /* Premium Hover Effects */
+  .hover-float {
+    transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  }
+  
+  .hover-float:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3), 0 0 30px rgba(246, 193, 204, 0.2);
+  }
+  
+  /* Magnetic Button Effect */
+  .btn-magnetic {
+    position: relative;
+    transition: all 0.3s cubic-bezier(0.23, 1, 0.32, 1);
+  }
+  
+  .btn-magnetic::before {
+    content: '';
+    position: absolute;
+    inset: -2px;
+    background: linear-gradient(45deg, var(--color-accent), var(--color-accent-light));
+    border-radius: inherit;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    z-index: -1;
+  }
+  
+  .btn-magnetic:hover::before {
+    opacity: 0.7;
+  }
+  
+  .btn-magnetic:hover {
+    transform: scale(1.05);
+  }
+  
+  /* Ripple Effect */
+  .ripple {
+    position: relative;
+    overflow: hidden;
+  }
+  
+  .ripple::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.3);
+    transform: translate(-50%, -50%);
+    transition: width 0.6s, height 0.6s;
+  }
+  
+  .ripple:active::after {
+    width: 300px;
+    height: 300px;
   }
 }
 

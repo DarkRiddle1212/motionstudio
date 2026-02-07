@@ -682,5 +682,32 @@ describe('Integration Tests - Motion Studio Platform', () => {
             expect(courseIds).toContain(instructor2Course.id);
         });
     });
+    describe('7. Static File Serving Integration Test', () => {
+        it('should serve uploaded files from /uploads path with proper MIME types and caching headers', async () => {
+            // Test that the test file exists and is accessible
+            const response = await (0, supertest_1.default)(index_1.default)
+                .get('/uploads/test.txt')
+                .expect(200);
+            // Verify caching headers are present
+            expect(response.headers['cache-control']).toBeDefined();
+            expect(response.headers['etag'] || response.headers['last-modified']).toBeDefined();
+            // Verify content is served correctly
+            expect(response.text).toBeTruthy();
+        });
+        it('should return 404 for non-existent files', async () => {
+            await (0, supertest_1.default)(index_1.default)
+                .get('/uploads/non-existent-file.jpg')
+                .expect(404);
+        });
+        it('should serve files from nested project directories', async () => {
+            // This test verifies the directory structure works
+            // The actual file serving will be tested when we implement the upload endpoints
+            const response = await (0, supertest_1.default)(index_1.default)
+                .get('/uploads/projects/')
+                .expect(404); // Directory listing should not be enabled
+            // This is expected - we don't want directory listing for security
+            expect(response.status).toBe(404);
+        });
+    });
 });
 //# sourceMappingURL=integration.test.js.map

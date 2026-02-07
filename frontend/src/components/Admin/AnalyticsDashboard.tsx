@@ -474,7 +474,7 @@ const AnalyticsDashboard = () => {
   const fetchSystemHealth = useCallback(async () => {
     try {
       const token = getAdminToken();
-      const response = await fetch('/api/admin/analytics/system-health', {
+      const response = await fetch('${API_URL}/admin/analytics/system-health', {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (!response.ok) throw new Error('Failed to fetch system health');
@@ -824,3 +824,4 @@ const AnalyticsDashboard = () => {
 };
 
 export default AnalyticsDashboard;
+

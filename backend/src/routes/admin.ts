@@ -8,6 +8,24 @@ import { EmailTemplateService } from '../services/emailTemplateService';
 import * as scholarshipService from '../services/scholarshipService';
 import { prisma } from '../utils/prisma';
 import { authenticateAdminToken, requireAdminRole, sessionTimeoutWarning, getActiveAdminSessions, forceLogoutAdminSession, AuthenticatedRequest } from '../middleware/auth';
+import { thumbnailUpload, heroUpload, galleryUpload, handleMulterError } from '../middleware/uploadMiddleware';
+import { fileStorageManager } from '../services/fileStorageService';
+import { imageProcessor } from '../services/imageProcessorService';
+import { videoProcessor } from '../services/videoProcessorService';
+import rateLimit from 'express-rate-limit';
+
+// Rate limiter for upload endpoints (20 requests per minute per IP)
+const uploadRateLimiter = rateLimit({
+  windowMs: 60 * 1000, // 1 minute
+  max: 20, // 20 requests per minute
+  message: {
+    error: 'Too many upload requests',
+    code: 'RATE_LIMIT_EXCEEDED',
+    message: 'You have exceeded the upload rate limit. Please try again later.',
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
 
 const router = express.Router();
 const authService = new AuthService();
@@ -2508,6 +2526,332 @@ router.post('/projects/bulk/delete', authenticateAdminToken, async (req: Authent
   }
 });
 
+// ==================== PROJECT MEDIA UPLOAD ROUTES ====================
+
+// Upload project thumbnail
+router.post('/projects/upload/thumbnail', uploadRateLimiter, authenticateAdminToken, thumbnailUpload.single('file'), async (req: AuthenticatedRequest, res) => {
+  try {
+    if (!req.adminUser) {
+      return res.status(401).json({ error: 'Admin authentication required' });
+    }
+
+    if (!req.file) {
+      return res.status(400).json({ error: 'No file uploaded' });
+    }
+
+    const { projectId } = req.body;
+    if (!projectId) {
+      return res.status(400).json({ error: 'projectId is required' });
+    }
+
+    // Process the image
+    const processedBuffer = await imageProcessor.processImage(req.file.buffer, {
+      width: 400,
+      height: 300,
+      quality: 80,
+      format: 'webp',
+    });
+
+    // Get metadata
+    const metadata = await imageProcessor.getMetadata(processedBuffer);
+
+    // Save to storage
+    const filePath = await fileStorageManager.saveFile(
+      projectId,
+      'thumbnail',
+      processedBuffer,
+      'webp'
+    );
+
+    // Get public URL
+    const publicUrl = fileStorageManager.getPublicUrl(filePath);
+
+    res.json({
+      success: true,
+      url: publicUrl,
+      path: filePath,
+      metadata: {
+        width: metadata.width,
+        height: metadata.height,
+        size: metadata.size,
+        format: metadata.format,
+      },
+    });
+  } catch (error: any) {
+    console.error('Thumbnail upload error:', error);
+    res.status(500).json({ 
+      error: 'Upload failed',
+      code: 'PROCESSING_FAILED',
+      message: 'Image processing failed. Please try again with a different image.'
+    });
+  }
+});
+
+// Upload project hero (image or video)
+router.post('/projects/upload/hero', uploadRateLimiter, authenticateAdminToken, heroUpload.single('file'), async (req: AuthenticatedRequest, res) => {
+  try {
+    if (!req.adminUser) {
+      return res.status(401).json({ error: 'Admin authentication required' });
+    }
+
+    if (!req.file) {
+      return res.status(400).json({ error: 'No file uploaded' });
+    }
+
+    const { projectId } = req.body;
+    if (!projectId) {
+      return res.status(400).json({ error: 'projectId is required' });
+    }
+
+    const isVideo = req.file.mimetype.startsWith('video/');
+
+    if (isVideo) {
+      // Handle video upload
+      const tempInputPath = videoProcessor.createTempPath('input', 'video');
+      const tempOutputPath = videoProcessor.createTempPath('output', 'mp4');
+      const tempThumbnailPath = videoProcessor.createTempPath('thumbnail', 'jpg');
+
+      try {
+        // Write uploaded file to temp location
+        const fs = require('fs').promises;
+        await fs.writeFile(tempInputPath, req.file.buffer);
+
+        // Process video
+        const videoMetadata = await videoProcessor.processVideo(tempInputPath, tempOutputPath, {
+          quality: 'medium',
+          maxWidth: 1920,
+        });
+
+        // Generate thumbnail
+        await videoProcessor.generateVideoThumbnail(tempOutputPath, tempThumbnailPath);
+
+        // Read processed files
+        const [processedVideo, thumbnailBuffer] = await Promise.all([
+          fs.readFile(tempOutputPath),
+          fs.readFile(tempThumbnailPath),
+        ]);
+
+        // Save video and thumbnail
+        const [videoPath, thumbnailPath] = await Promise.all([
+          fileStorageManager.saveFile(projectId, 'video', processedVideo, 'mp4'),
+          fileStorageManager.saveFile(projectId, 'video-thumbnail', thumbnailBuffer, 'jpg'),
+        ]);
+
+        // Clean up temp files
+        await videoProcessor.cleanupTempFiles([tempInputPath, tempOutputPath, tempThumbnailPath]);
+
+        res.json({
+          success: true,
+          mediaType: 'video',
+          videoUrl: fileStorageManager.getPublicUrl(videoPath),
+          videoPath,
+          thumbnailUrl: fileStorageManager.getPublicUrl(thumbnailPath),
+          thumbnailPath,
+          metadata: {
+            duration: videoMetadata.duration,
+            width: videoMetadata.width,
+            height: videoMetadata.height,
+            size: videoMetadata.size,
+            format: videoMetadata.format,
+            codec: videoMetadata.codec,
+          },
+        });
+      } catch (error) {
+        // Clean up temp files on error
+        await videoProcessor.cleanupTempFiles([tempInputPath, tempOutputPath, tempThumbnailPath]);
+        throw error;
+      }
+    } else {
+      // Handle image upload
+      const processedBuffer = await imageProcessor.processImage(req.file.buffer, {
+        width: 1920,
+        height: 1080,
+        quality: 85,
+        format: 'webp',
+      });
+
+      const metadata = await imageProcessor.getMetadata(processedBuffer);
+
+      const filePath = await fileStorageManager.saveFile(
+        projectId,
+        'hero',
+        processedBuffer,
+        'webp'
+      );
+
+      res.json({
+        success: true,
+        mediaType: 'image',
+        url: fileStorageManager.getPublicUrl(filePath),
+        path: filePath,
+        metadata: {
+          width: metadata.width,
+          height: metadata.height,
+          size: metadata.size,
+          format: metadata.format,
+        },
+      });
+    }
+  } catch (error: any) {
+    console.error('Hero upload error:', error);
+    res.status(500).json({ 
+      error: 'Upload failed',
+      code: 'PROCESSING_FAILED',
+      message: 'Media processing failed. Please try again with a different file.'
+    });
+  }
+});
+
+// Upload gallery images
+router.post('/projects/upload/gallery', uploadRateLimiter, authenticateAdminToken, galleryUpload.array('files', 10), async (req: AuthenticatedRequest, res) => {
+  try {
+    if (!req.adminUser) {
+      return res.status(401).json({ error: 'Admin authentication required' });
+    }
+
+    if (!req.files || !Array.isArray(req.files) || req.files.length === 0) {
+      return res.status(400).json({ error: 'No files uploaded' });
+    }
+
+    const { projectId } = req.body;
+    if (!projectId) {
+      return res.status(400).json({ error: 'projectId is required' });
+    }
+
+    // Process all images in parallel
+    const results = await Promise.all(
+      req.files.map(async (file) => {
+        try {
+          const processedBuffer = await imageProcessor.processImage(file.buffer, {
+            width: 1920,
+            height: 1080,
+            quality: 85,
+            format: 'webp',
+          });
+
+          const metadata = await imageProcessor.getMetadata(processedBuffer);
+
+          const filePath = await fileStorageManager.saveFile(
+            projectId,
+            'gallery',
+            processedBuffer,
+            'webp'
+          );
+
+          return {
+            success: true,
+            url: fileStorageManager.getPublicUrl(filePath),
+            path: filePath,
+            metadata: {
+              width: metadata.width,
+              height: metadata.height,
+              size: metadata.size,
+              format: metadata.format,
+            },
+          };
+        } catch (error: any) {
+          return {
+            success: false,
+            error: error.message,
+            filename: file.originalname,
+          };
+        }
+      })
+    );
+
+    const successful = results.filter(r => r.success);
+    const failed = results.filter(r => !r.success);
+
+    res.json({
+      success: true,
+      uploaded: successful.length,
+      failed: failed.length,
+      results,
+    });
+  } catch (error: any) {
+    console.error('Gallery upload error:', error);
+    res.status(500).json({ 
+      error: 'Upload failed',
+      code: 'PROCESSING_FAILED',
+      message: 'Gallery processing failed. Please try again with different images.'
+    });
+  }
+});
+
+// Delete project media
+router.delete('/projects/:projectId/media/:type', authenticateAdminToken, async (req: AuthenticatedRequest, res) => {
+  try {
+    if (!req.adminUser) {
+      return res.status(401).json({ error: 'Admin authentication required' });
+    }
+
+    const { projectId, type } = req.params;
+
+    // Get project to find file paths
+    const project = await prisma.project.findUnique({
+      where: { id: projectId },
+    });
+
+    if (!project) {
+      return res.status(404).json({ error: 'Project not found' });
+    }
+
+    // Determine which field to clear and which file to delete
+    let filePath: string | null = null;
+    const updateData: any = {};
+
+    switch (type) {
+      case 'thumbnail':
+        filePath = project.thumbnailPath;
+        updateData.thumbnailPath = null;
+        break;
+      case 'hero':
+        if (project.mediaType === 'video') {
+          filePath = project.videoPath;
+          updateData.videoPath = null;
+          updateData.videoThumbnailPath = null;
+          // Also delete video thumbnail
+          if (project.videoThumbnailPath) {
+            await fileStorageManager.deleteFile(project.videoThumbnailPath);
+          }
+        } else {
+          filePath = project.caseStudyPath;
+          updateData.caseStudyPath = null;
+        }
+        break;
+      case 'gallery':
+        const galleryImages = JSON.parse(project.galleryImages || '[]');
+        // Delete all gallery images
+        await Promise.all(
+          galleryImages.map((path: string) => fileStorageManager.deleteFile(path))
+        );
+        updateData.galleryImages = '[]';
+        break;
+      default:
+        return res.status(400).json({ error: 'Invalid media type' });
+    }
+
+    // Delete the file if it exists
+    if (filePath) {
+      await fileStorageManager.deleteFile(filePath);
+    }
+
+    // Update database
+    await prisma.project.update({
+      where: { id: projectId },
+      data: updateData,
+    });
+
+    res.json({ success: true, message: 'Media deleted successfully' });
+  } catch (error: any) {
+    console.error('Media delete error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Apply Multer error handler
+router.use(handleMulterError);
+
 // ==================== SYSTEM CONFIGURATION ROUTES ====================
 
 // Get all system configurations
@@ -3038,7 +3382,7 @@ router.post('/data/export', authenticateAdminToken, async (req: AuthenticatedReq
       try {
         // Simulate export processing
         await auditService.logAction({
-          adminId: req.adminUser.userId,
+          adminId: req.adminUser!.userId,
           action: 'data_export_completed',
           resourceType: 'data_export',
           resourceId: exportId,
@@ -3110,7 +3454,7 @@ router.post('/data/import', authenticateAdminToken, async (req: AuthenticatedReq
         const errors = Math.random() > 0.7 ? ['Sample validation error', 'Duplicate record found'] : [];
 
         await auditService.logAction({
-          adminId: req.adminUser.userId,
+          adminId: req.adminUser!.userId,
           action: validateOnly ? 'data_import_validated' : 'data_import_completed',
           resourceType: 'data_import',
           resourceId: importId,
@@ -3184,7 +3528,7 @@ router.get('/data/jobs/:jobId', authenticateAdminToken, async (req: Authenticate
       createdAt: jobLogs[jobLogs.length - 1].timestamp,
       completedAt: status === 'completed' ? latestLog.timestamp : null,
       progress: status === 'completed' ? 100 : Math.floor(Math.random() * 80) + 10,
-      ...latestLog.changes,
+      ...(latestLog.changes ? JSON.parse(latestLog.changes) : {}),
     };
 
     if (isExport && status === 'completed') {

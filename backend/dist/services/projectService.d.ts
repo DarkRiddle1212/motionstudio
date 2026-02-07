@@ -37,6 +37,13 @@ export declare class ProjectService {
         motionBreakdown: string;
         toolsUsed: string;
         caseStudyUrl: string;
+        thumbnailPath: string | null;
+        caseStudyPath: string | null;
+        mediaType: string;
+        videoPath: string | null;
+        videoThumbnailPath: string | null;
+        videoDuration: number | null;
+        galleryImages: string;
     }[]>;
     getProjectById(id: string, includeUnpublished?: boolean): Promise<{
         id: string;
@@ -52,6 +59,13 @@ export declare class ProjectService {
         motionBreakdown: string;
         toolsUsed: string;
         caseStudyUrl: string;
+        thumbnailPath: string | null;
+        caseStudyPath: string | null;
+        mediaType: string;
+        videoPath: string | null;
+        videoThumbnailPath: string | null;
+        videoDuration: number | null;
+        galleryImages: string;
     }>;
     createProject(data: CreateProjectData): Promise<{
         id: string;
@@ -67,6 +81,13 @@ export declare class ProjectService {
         motionBreakdown: string;
         toolsUsed: string;
         caseStudyUrl: string;
+        thumbnailPath: string | null;
+        caseStudyPath: string | null;
+        mediaType: string;
+        videoPath: string | null;
+        videoThumbnailPath: string | null;
+        videoDuration: number | null;
+        galleryImages: string;
     }>;
     updateProject(id: string, data: UpdateProjectData): Promise<{
         id: string;
@@ -82,6 +103,13 @@ export declare class ProjectService {
         motionBreakdown: string;
         toolsUsed: string;
         caseStudyUrl: string;
+        thumbnailPath: string | null;
+        caseStudyPath: string | null;
+        mediaType: string;
+        videoPath: string | null;
+        videoThumbnailPath: string | null;
+        videoDuration: number | null;
+        galleryImages: string;
     }>;
     deleteProject(id: string): Promise<{
         message: string;
@@ -100,6 +128,13 @@ export declare class ProjectService {
         motionBreakdown: string;
         toolsUsed: string;
         caseStudyUrl: string;
+        thumbnailPath: string | null;
+        caseStudyPath: string | null;
+        mediaType: string;
+        videoPath: string | null;
+        videoThumbnailPath: string | null;
+        videoDuration: number | null;
+        galleryImages: string;
     }[]>;
 }
 //# sourceMappingURL=projectService.d.ts.map

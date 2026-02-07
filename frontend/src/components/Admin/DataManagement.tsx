@@ -69,15 +69,14 @@ const DataManagement = () => {
     { id: 'audit_logs', label: 'Audit Logs', description: 'System audit trail' },
   ];
 
-  const handleExport = async () => {
+  const handleExport = useCallback(async () => {
     if (!token || exportRequest.tables.length === 0) return;
     
     setLoading(true);
     setError(null);
 
     try {
-      const response = await fetch(`${API_URL}/api/admin/da
-      const response = await fetch('/api/admin/bulk-operations', {
+      const response = await fetch(`${API_URL}/admin/bulk-operations`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -101,7 +100,7 @@ const DataManagement = () => {
     } finally {
       setIsExporting(false);
     }
-  }, [exportRequest]);
+  }, [exportRequest, token]);
 
   const handleImport = useCallback(async () => {
     if (!importRequest.file) {
@@ -125,7 +124,7 @@ const DataManagement = () => {
         throw new Error('Unsupported file format. Please use JSON or CSV.');
       }
 
-      const response = await fetch('/api/admin/bulk-operations', {
+      const response = await fetch(`${API_URL}/admin/bulk-operations`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

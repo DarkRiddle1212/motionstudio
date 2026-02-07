@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useAuth } from './useAuth';
 
-const API_URL = (import.meta as any).env?.VITE_API_URL || 'http://localhost:5000/api';
+const API_URL = (import.meta as any).env?.VITE_API_URL || 'http://localhost:5001/api';
 
 export interface Course {
   id: string;
@@ -157,12 +157,15 @@ export const useCourses = () => {
   ];
 
   const fetchCourses = async () => {
-    setLoading(true);
-    setError(null);
     try {
-      // Try to fetch from API first, fallback to mock data
+      setLoading(true);
+      setError(null);
+      
+      // Try to fetch from API first with timeout, fallback to mock data
       try {
-        const response = await axios.get(`${API_URL}/courses`);
+        const response = await axios.get(`${API_URL}/courses`, {
+          timeout: 3000 // 3 second timeout
+        });
         setCourses(response.data.courses);
       } catch (apiError) {
         // If API fails, use mock data
@@ -170,6 +173,7 @@ export const useCourses = () => {
         setCourses(mockCourses);
       }
     } catch (err: any) {
+      console.error('Error fetching courses:', err);
       setError(err.response?.data?.error || 'Failed to fetch courses');
       // Even on error, show mock data
       setCourses(mockCourses);
@@ -205,6 +209,15 @@ export const useCourses = () => {
 
   useEffect(() => {
     fetchCourses();
+    
+    // Safety timeout: force loading=false after 2 seconds
+    const safetyTimeout = setTimeout(() => {
+      console.warn('useCourses: Safety timeout triggered, forcing loading=false');
+      setLoading(false);
+      setCourses(prev => prev.length === 0 ? mockCourses : prev);
+    }, 2000);
+    
+    return () => clearTimeout(safetyTimeout);
   }, []);
 
   return {

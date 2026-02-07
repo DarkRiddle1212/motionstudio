@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Motion Studio - Test Page</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+            background-color: #000000;
+            color: #ffffff;
+            font-family: Arial, sans-serif;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .container {
+            text-align: center;
+            max-width: 600px;
+            padding: 20px;
+        }
+        h1 {
+            font-size: 48px;
+            font-weight: bold;
+            margin-bottom: 24px;
+        }
+        p {
+            font-size: 18px;
+            color: #888888;
+            margin-bottom: 32px;
+        }
+        .buttons {
+            display: flex;
+            gap: 16px;
+            justify-content: center;
+        }
+        .btn-primary {
+            background-color: #ec4899;
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+        .btn-secondary {
+            background-color: transparent;
+            color: white;
+            padding: 12px 24px;
+            border: 1px solid #666666;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+        .status {
+            margin-top: 32px;
+            font-size: 14px;
+            color: #666666;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Motion Studio</h1>
+        <p>Static HTML Test Page - No React, No JavaScript</p>
+        <div class="buttons">
+            <button class="btn-primary">Get Started</button>
+            <button class="btn-secondary">Learn More</button>
+        </div>
+        <div class="status">
+            <p>✅ Static HTML: Working</p>
+            <p>✅ Frontend Server: Port 3000</p>
+            <p>✅ Backend Server: Port 5001</p>
+            <p>🔧 Test: <a href="/" style="color: #ec4899;">Go to React App</a></p>
+        </div>
+    </div>
+</body>
+</html>

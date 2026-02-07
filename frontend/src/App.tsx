@@ -1,9 +1,12 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
 import { Suspense, lazy } from 'react'
-import { AuthProvider } from './hooks/useAuth'
+import { AuthProvider, useAuth } from './hooks/useAuth'
 import { ProtectedRoute, PerformanceMonitor, CriticalCSS, ErrorBoundary, OfflineIndicator, LoadingState } from './components/Common'
 import { AdminProtectedRoute } from './components/Admin'
 import { useMemoryMonitor } from './hooks/usePerformance'
+
+// Direct imports for testing
+import { HomePage } from './components/Pages/Home'
 
 // Lazy load components for code splitting
 const SignUp = lazy(() => import('./components/Pages/Auth').then(module => ({ default: module.SignUp })))
@@ -33,7 +36,6 @@ const SubmissionHistory = lazy(() => import('./components/Pages/Assignments').th
 
 const SubmissionReview = lazy(() => import('./components/Pages/Instructor').then(module => ({ default: module.SubmissionReview })))
 
-const HomePage = lazy(() => import('./components/Pages/Home').then(module => ({ default: module.HomePage })))
 const AboutPage = lazy(() => import('./components/Pages/About').then(module => ({ default: module.AboutPage })))
 const ContactPage = lazy(() => import('./components/Pages/Contact').then(module => ({ default: module.ContactPage })))
 
@@ -69,11 +71,36 @@ function App() {
     >
       <CriticalCSS>
         <AuthProvider>
-          <PerformanceMonitor />
-          <OfflineIndicator />
-          <Router>
-            <Suspense fallback={<LoadingSpinner />}>
-              <Routes>
+          <AppContent />
+        </AuthProvider>
+      </CriticalCSS>
+    </ErrorBoundary>
+  )
+}
+
+// Separate component to access auth context
+function AppContent() {
+  const { loading } = useAuth();
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-black">
+        <LoadingState 
+          message="Initializing application..."
+          size="lg"
+          fullScreen
+        />
+      </div>
+    );
+  }
+
+  return (
+    <>
+      <PerformanceMonitor />
+      <OfflineIndicator />
+      <Router>
+        <Suspense fallback={<LoadingSpinner />}>
+          <Routes>
               {/* Public Routes */}
               <Route path="/" element={<HomePage />} />
               <Route path="/about" element={<AboutPage />} />
@@ -219,10 +246,8 @@ function App() {
             </Routes>
           </Suspense>
         </Router>
-      </AuthProvider>
-    </CriticalCSS>
-  </ErrorBoundary>
-  )
+      </>
+    );
 }
 
 export default App

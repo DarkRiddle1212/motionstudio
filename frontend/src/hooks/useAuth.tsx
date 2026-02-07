@@ -1,7 +1,11 @@
 import { useState, useEffect, createContext, useContext, ReactNode } from 'react';
 import axios from 'axios';
 
-const API_URL = (import.meta as any).env?.VITE_API_URL || 'http://localhost:5000/api';
+// Configure axios defaults
+axios.defaults.timeout = 10000; // 10 second timeout
+axios.defaults.headers.common['Content-Type'] = 'application/json';
+
+const API_URL = (import.meta as any).env?.VITE_API_URL || 'http://localhost:5001/api';
 
 interface User {
   id: string;
@@ -33,19 +37,69 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   // Load token and user from localStorage on mount
   useEffect(() => {
-    const storedToken = localStorage.getItem('token');
-    const storedUser = localStorage.getItem('user');
-
-    if (storedToken && storedUser) {
-      setToken(storedToken);
-      setUser(JSON.parse(storedUser));
-      
-      // Set axios default header
-      axios.defaults.headers.common['Authorization'] = `Bearer ${storedToken}`;
-    }
+    console.log('AuthProvider: Loading auth state from localStorage');
     
-    setLoading(false);
+    const initializeAuth = async () => {
+      try {
+        // First, check if backend is reachable
+        try {
+          await axios.get(`${API_URL.replace('/api', '')}/api/health`, { timeout: 3000 });
+          console.log('AuthProvider: Backend health check passed');
+        } catch (healthError) {
+          console.warn('AuthProvider: Backend health check failed, continuing with cached auth:', healthError);
+        }
+
+        const storedToken = localStorage.getItem('token');
+        const storedUser = localStorage.getItem('user');
+
+        if (storedToken && storedUser) {
+          console.log('AuthProvider: Found stored auth data');
+
+          let parsedUser: User | null = null;
+          try {
+            parsedUser = JSON.parse(storedUser);
+          } catch (parseError) {
+            console.warn('AuthProvider: Failed to parse stored user JSON, clearing corrupted data', parseError);
+          }
+
+          if (parsedUser) {
+            setToken(storedToken);
+            setUser(parsedUser);
+
+            // Set axios default header
+            axios.defaults.headers.common['Authorization'] = `Bearer ${storedToken}`;
+          } else {
+            // Clear corrupted entries
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+          }
+        } else {
+          console.log('AuthProvider: No stored auth data found');
+        }
+      } catch (e) {
+        console.error('AuthProvider: Error loading auth state, clearing storage', e);
+        // As a safety, clear any possibly bad data
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+      } finally {
+        console.log('AuthProvider: Setting loading to false');
+        setLoading(false);
+      }
+    };
+
+    initializeAuth();
   }, []);
+
+  // Production-safe watchdog: ensure loading can't remain stuck
+  useEffect(() => {
+    const id = setTimeout(() => {
+      if (loading) {
+        console.warn('AuthProvider: Loading stuck watchdog triggered after 2 seconds. Forcing loading=false.');
+        setLoading(false);
+      }
+    }, 2000); // Reduced from 4000 to 2000ms
+    return () => clearTimeout(id);
+  }, [loading]);
 
   const login = async (email: string, password: string) => {
     try {
@@ -161,6 +215,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     isAuthenticated: !!user && !!token,
   };
 
+  // Always render children immediately - don't block on loading
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
 

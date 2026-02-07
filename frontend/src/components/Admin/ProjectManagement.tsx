@@ -4,6 +4,12 @@ import DataTable, { ColumnDef, PaginationConfig } from './DataTable';
 import SearchAndFilter, { FilterOption } from './SearchAndFilter';
 import BulkActions, { BulkAction, BulkActionIcons } from './BulkActions';
 import { useAuth } from '../../hooks/useAuth';
+import { FileUpload, UploadResult } from '../Common/FileUpload';
+import { MediaTypeSelector } from '../Common/MediaTypeSelector';
+import { ImagePreview } from '../Common/ImagePreview';
+import { VideoPreview } from '../Common/VideoPreview';
+import { GalleryUpload, GalleryImage } from '../Common/GalleryUpload';
+import { uploadThumbnail, uploadHero, uploadGallery, deleteMedia } from '../../utils/uploadApi';
 
 interface Project {
   id: string;
@@ -13,8 +19,26 @@ interface Project {
   solution: string;
   motionBreakdown: string;
   toolsUsed: string[];
+  
+  // Legacy URL fields (backward compatible)
   thumbnailUrl: string;
   caseStudyUrl: string;
+  
+  // New file path fields for uploaded media
+  thumbnailPath?: string;
+  caseStudyPath?: string;
+  
+  // Media type selection
+  mediaType: 'image' | 'video';
+  
+  // Video-specific fields
+  videoPath?: string;
+  videoThumbnailPath?: string;
+  videoDuration?: number;
+  
+  // Gallery images
+  galleryImages: string; // JSON array of image paths
+  
   order: number;
   isPublished: boolean;
   createdAt: string;
@@ -28,8 +52,17 @@ interface ProjectFormData {
   solution: string;
   motionBreakdown: string;
   toolsUsed: string;
+  
+  // Legacy URL fields (for backward compatibility)
   thumbnailUrl: string;
   caseStudyUrl: string;
+  
+  // New upload fields
+  mediaType: 'image' | 'video';
+  uploadedThumbnail?: UploadResult;
+  uploadedHero?: UploadResult;
+  galleryImages: GalleryImage[];
+  
   isPublished: boolean;
 }
 
@@ -64,10 +97,17 @@ const ProjectManagement = () => {
     toolsUsed: '',
     thumbnailUrl: '',
     caseStudyUrl: '',
+    mediaType: 'image',
+    galleryImages: [],
     isPublished: false,
   });
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
   const [submitting, setSubmitting] = useState(false);
+  
+  // Upload states
+  const [uploadingThumbnail, setUploadingThumbnail] = useState(false);
+  const [uploadingHero, setUploadingHero] = useState(false);
+  const [uploadingGallery, setUploadingGallery] = useState(false);
 
   // Drag and drop state
   const [draggedProject, setDraggedProject] = useState<Project | null>(null);
@@ -118,10 +158,18 @@ const ProjectManagement = () => {
     if (!formData.goal.trim()) errors.goal = 'Goal is required';
     if (!formData.solution.trim()) errors.solution = 'Solution is required';
     if (!formData.motionBreakdown.trim()) errors.motionBreakdown = 'Motion breakdown is required';
-    if (!formData.thumbnailUrl.trim()) errors.thumbnailUrl = 'Thumbnail URL is required';
-    if (!formData.caseStudyUrl.trim()) errors.caseStudyUrl = 'Case study URL is required';
     
-    // Validate URLs
+    // Check if thumbnail is provided (either uploaded or URL)
+    if (!formData.uploadedThumbnail && !formData.thumbnailUrl.trim()) {
+      errors.thumbnail = 'Thumbnail is required';
+    }
+    
+    // Check if hero media is provided (either uploaded or URL)
+    if (!formData.uploadedHero && !formData.caseStudyUrl.trim()) {
+      errors.hero = 'Hero image or video is required';
+    }
+    
+    // Validate URLs if provided (for backward compatibility)
     const urlPattern = /^https?:\/\/.+/;
     if (formData.thumbnailUrl && !urlPattern.test(formData.thumbnailUrl)) {
       errors.thumbnailUrl = 'Invalid URL format';
@@ -146,6 +194,8 @@ const ProjectManagement = () => {
       toolsUsed: '',
       thumbnailUrl: '',
       caseStudyUrl: '',
+      mediaType: 'image',
+      galleryImages: [],
       isPublished: false,
     });
     setFormErrors({});
@@ -155,6 +205,20 @@ const ProjectManagement = () => {
   const handleEditProject = (project: Project) => {
     setModalMode('edit');
     setEditingProject(project);
+    
+    // Parse gallery images from JSON string
+    let galleryImages: GalleryImage[] = [];
+    try {
+      const parsed = JSON.parse(project.galleryImages || '[]');
+      galleryImages = parsed.map((path: string, index: number) => ({
+        id: `${project.id}-gallery-${index}`,
+        url: `/uploads/${path}`,
+        path: path,
+      }));
+    } catch (e) {
+      console.warn('Failed to parse gallery images:', e);
+    }
+    
     setFormData({
       title: project.title,
       description: project.description,
@@ -164,10 +228,100 @@ const ProjectManagement = () => {
       toolsUsed: project.toolsUsed.join(', '),
       thumbnailUrl: project.thumbnailUrl,
       caseStudyUrl: project.caseStudyUrl,
+      mediaType: project.mediaType || 'image',
+      uploadedThumbnail: project.thumbnailPath ? {
+        url: `/uploads/${project.thumbnailPath}`,
+        path: project.thumbnailPath,
+        size: 0, // We don't have this info from the backend
+      } : undefined,
+      uploadedHero: project.caseStudyPath || project.videoPath ? {
+        url: project.mediaType === 'video' && project.videoPath 
+          ? `/uploads/${project.videoPath}` 
+          : `/uploads/${project.caseStudyPath}`,
+        path: project.mediaType === 'video' ? project.videoPath! : project.caseStudyPath!,
+        size: 0,
+        duration: project.videoDuration,
+      } : undefined,
+      galleryImages,
       isPublished: project.isPublished,
     });
     setFormErrors({});
     setShowModal(true);
+  };
+
+  // Upload handlers
+  const handleThumbnailUpload = async (file: File): Promise<UploadResult> => {
+    setUploadingThumbnail(true);
+    try {
+      const result = await uploadThumbnail('temp', file);
+      const uploadResult: UploadResult = {
+        url: result.url,
+        path: result.path,
+        dimensions: {
+          width: result.metadata.width,
+          height: result.metadata.height,
+        },
+        size: result.metadata.size,
+      };
+      setFormData(prev => ({ ...prev, uploadedThumbnail: uploadResult }));
+      return uploadResult;
+    } finally {
+      setUploadingThumbnail(false);
+    }
+  };
+
+  const handleHeroUpload = async (file: File): Promise<UploadResult> => {
+    setUploadingHero(true);
+    try {
+      const result = await uploadHero('temp', file);
+      const uploadResult: UploadResult = {
+        url: result.mediaType === 'video' ? result.videoUrl : result.url,
+        path: result.mediaType === 'video' ? result.videoPath : result.path,
+        dimensions: {
+          width: result.metadata.width,
+          height: result.metadata.height,
+        },
+        size: result.metadata.size,
+        duration: result.mediaType === 'video' ? result.metadata.duration : undefined,
+      };
+      setFormData(prev => ({ ...prev, uploadedHero: uploadResult }));
+      return uploadResult;
+    } finally {
+      setUploadingHero(false);
+    }
+  };
+
+  const handleGalleryUpload = async (files: File[]): Promise<GalleryImage[]> => {
+    setUploadingGallery(true);
+    try {
+      const result = await uploadGallery('temp', files);
+      const newImages: GalleryImage[] = result.results
+        .filter(r => r.success && r.url && r.path)
+        .map((r, index) => ({
+          id: `gallery-${Date.now()}-${index}`,
+          url: r.url!,
+          path: r.path!,
+          metadata: r.metadata,
+        }));
+      return newImages;
+    } finally {
+      setUploadingGallery(false);
+    }
+  };
+
+  const handleRemoveThumbnail = () => {
+    setFormData(prev => ({ ...prev, uploadedThumbnail: undefined }));
+  };
+
+  const handleRemoveHero = () => {
+    setFormData(prev => ({ ...prev, uploadedHero: undefined }));
+  };
+
+  const handleRemoveGalleryImage = (imageId: string) => {
+    setFormData(prev => ({
+      ...prev,
+      galleryImages: prev.galleryImages.filter(img => img.id !== imageId),
+    }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -184,8 +338,28 @@ const ProjectManagement = () => {
         .filter(t => t.length > 0);
       
       const payload = {
-        ...formData,
+        title: formData.title,
+        description: formData.description,
+        goal: formData.goal,
+        solution: formData.solution,
+        motionBreakdown: formData.motionBreakdown,
         toolsUsed: toolsUsedArray,
+        isPublished: formData.isPublished,
+        
+        // Media fields
+        mediaType: formData.mediaType,
+        
+        // Use uploaded files if available, otherwise fall back to URLs
+        thumbnailUrl: formData.uploadedThumbnail?.url || formData.thumbnailUrl,
+        thumbnailPath: formData.uploadedThumbnail?.path,
+        
+        caseStudyUrl: formData.uploadedHero?.url || formData.caseStudyUrl,
+        caseStudyPath: formData.mediaType === 'image' ? formData.uploadedHero?.path : undefined,
+        videoPath: formData.mediaType === 'video' ? formData.uploadedHero?.path : undefined,
+        videoDuration: formData.mediaType === 'video' ? formData.uploadedHero?.duration : undefined,
+        
+        // Gallery images as JSON string of paths
+        galleryImages: JSON.stringify(formData.galleryImages.map(img => img.path)),
       };
       
       const url = modalMode === 'create'
@@ -770,36 +944,158 @@ const ProjectManagement = () => {
                     <p className="mt-1 text-xs text-gray-500">Separate multiple tools with commas</p>
                   </div>
 
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Thumbnail URL <span className="text-red-500">*</span>
+                  {/* Thumbnail Upload Section */}
+                  <div className="md:col-span-2">
+                    <label className="block text-sm font-medium text-gray-700 mb-3">
+                      Project Thumbnail <span className="text-red-500">*</span>
                     </label>
-                    <input
-                      type="url"
-                      value={formData.thumbnailUrl}
-                      onChange={(e) => setFormData({ ...formData, thumbnailUrl: e.target.value })}
-                      className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-                        formErrors.thumbnailUrl ? 'border-red-500' : 'border-gray-300'
-                      }`}
-                      placeholder="https://example.com/thumbnail.jpg"
-                    />
-                    {formErrors.thumbnailUrl && <p className="mt-1 text-sm text-red-500">{formErrors.thumbnailUrl}</p>}
+                    
+                    {formData.uploadedThumbnail ? (
+                      <ImagePreview
+                        url={formData.uploadedThumbnail.url}
+                        alt="Project thumbnail"
+                        metadata={formData.uploadedThumbnail.dimensions ? {
+                          width: formData.uploadedThumbnail.dimensions.width,
+                          height: formData.uploadedThumbnail.dimensions.height,
+                          size: formData.uploadedThumbnail.size,
+                        } : undefined}
+                        onReplace={() => setFormData(prev => ({ ...prev, uploadedThumbnail: undefined }))}
+                        onRemove={handleRemoveThumbnail}
+                        className="max-w-sm"
+                      />
+                    ) : (
+                      <FileUpload
+                        accept="image/*"
+                        maxSize={5 * 1024 * 1024} // 5MB
+                        onUpload={handleThumbnailUpload}
+                        mediaType="image"
+                        label="Upload thumbnail image"
+                        helpText="Recommended: 400x300px, max 5MB"
+                      />
+                    )}
+                    
+                    {/* Fallback URL input for backward compatibility */}
+                    {!formData.uploadedThumbnail && (
+                      <div className="mt-4">
+                        <label className="block text-sm font-medium text-gray-500 mb-1">
+                          Or enter thumbnail URL
+                        </label>
+                        <input
+                          type="url"
+                          value={formData.thumbnailUrl}
+                          onChange={(e) => setFormData({ ...formData, thumbnailUrl: e.target.value })}
+                          className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                            formErrors.thumbnailUrl ? 'border-red-500' : 'border-gray-300'
+                          }`}
+                          placeholder="https://example.com/thumbnail.jpg"
+                        />
+                        {formErrors.thumbnailUrl && <p className="mt-1 text-sm text-red-500">{formErrors.thumbnailUrl}</p>}
+                      </div>
+                    )}
+                    
+                    {formErrors.thumbnail && <p className="mt-1 text-sm text-red-500">{formErrors.thumbnail}</p>}
                   </div>
 
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Case Study URL <span className="text-red-500">*</span>
+                  {/* Hero Media Section */}
+                  <div className="md:col-span-2">
+                    <label className="block text-sm font-medium text-gray-700 mb-3">
+                      Hero Media <span className="text-red-500">*</span>
                     </label>
-                    <input
-                      type="url"
-                      value={formData.caseStudyUrl}
-                      onChange={(e) => setFormData({ ...formData, caseStudyUrl: e.target.value })}
-                      className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-                        formErrors.caseStudyUrl ? 'border-red-500' : 'border-gray-300'
-                      }`}
-                      placeholder="https://example.com/case-study"
+                    
+                    {/* Media Type Selector */}
+                    <div className="mb-4">
+                      <MediaTypeSelector
+                        value={formData.mediaType}
+                        onChange={(value) => setFormData(prev => ({ 
+                          ...prev, 
+                          mediaType: value,
+                          uploadedHero: undefined // Clear when switching types
+                        }))}
+                      />
+                    </div>
+                    
+                    {formData.uploadedHero ? (
+                      formData.mediaType === 'video' ? (
+                        <VideoPreview
+                          videoUrl={formData.uploadedHero.url}
+                          metadata={formData.uploadedHero.dimensions && formData.uploadedHero.duration ? {
+                            duration: formData.uploadedHero.duration,
+                            width: formData.uploadedHero.dimensions.width,
+                            height: formData.uploadedHero.dimensions.height,
+                            size: formData.uploadedHero.size,
+                          } : undefined}
+                          onReplace={() => setFormData(prev => ({ ...prev, uploadedHero: undefined }))}
+                          onRemove={handleRemoveHero}
+                          className="max-w-lg"
+                        />
+                      ) : (
+                        <ImagePreview
+                          url={formData.uploadedHero.url}
+                          alt="Hero image"
+                          metadata={formData.uploadedHero.dimensions ? {
+                            width: formData.uploadedHero.dimensions.width,
+                            height: formData.uploadedHero.dimensions.height,
+                            size: formData.uploadedHero.size,
+                          } : undefined}
+                          onReplace={() => setFormData(prev => ({ ...prev, uploadedHero: undefined }))}
+                          onRemove={handleRemoveHero}
+                          className="max-w-lg"
+                        />
+                      )
+                    ) : (
+                      <FileUpload
+                        accept={formData.mediaType === 'video' ? 'video/*' : 'image/*'}
+                        maxSize={formData.mediaType === 'video' ? 50 * 1024 * 1024 : 10 * 1024 * 1024} // 50MB for video, 10MB for image
+                        onUpload={handleHeroUpload}
+                        mediaType={formData.mediaType}
+                        label={`Upload hero ${formData.mediaType}`}
+                        helpText={formData.mediaType === 'video' 
+                          ? 'Recommended: MP4 format, max 50MB' 
+                          : 'Recommended: 1200x800px, max 10MB'
+                        }
+                      />
+                    )}
+                    
+                    {/* Fallback URL input for backward compatibility */}
+                    {!formData.uploadedHero && (
+                      <div className="mt-4">
+                        <label className="block text-sm font-medium text-gray-500 mb-1">
+                          Or enter {formData.mediaType} URL
+                        </label>
+                        <input
+                          type="url"
+                          value={formData.caseStudyUrl}
+                          onChange={(e) => setFormData({ ...formData, caseStudyUrl: e.target.value })}
+                          className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                            formErrors.caseStudyUrl ? 'border-red-500' : 'border-gray-300'
+                          }`}
+                          placeholder={`https://example.com/${formData.mediaType === 'video' ? 'video.mp4' : 'hero-image.jpg'}`}
+                        />
+                        {formErrors.caseStudyUrl && <p className="mt-1 text-sm text-red-500">{formErrors.caseStudyUrl}</p>}
+                      </div>
+                    )}
+                    
+                    {formErrors.hero && <p className="mt-1 text-sm text-red-500">{formErrors.hero}</p>}
+                  </div>
+
+                  {/* Gallery Upload Section */}
+                  <div className="md:col-span-2">
+                    <label className="block text-sm font-medium text-gray-700 mb-3">
+                      Gallery Images (Optional)
+                    </label>
+                    
+                    <GalleryUpload
+                      images={formData.galleryImages}
+                      onImagesChange={(images) => setFormData(prev => ({ ...prev, galleryImages: images }))}
+                      onUpload={handleGalleryUpload}
+                      onRemove={handleRemoveGalleryImage}
+                      maxImages={10}
+                      className="mb-4"
                     />
-                    {formErrors.caseStudyUrl && <p className="mt-1 text-sm text-red-500">{formErrors.caseStudyUrl}</p>}
+                    
+                    <p className="text-xs text-gray-500">
+                      Upload up to 10 additional images to showcase your project. Drag to reorder.
+                    </p>
                   </div>
 
                   <div className="md:col-span-2">

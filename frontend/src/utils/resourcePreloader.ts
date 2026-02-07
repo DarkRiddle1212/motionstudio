@@ -200,30 +200,52 @@ export const CRITICAL_RESOURCES = {
 
 // Initialize critical resource preloading
 export const initializeCriticalResources = async (): Promise<void> => {
-  const preloader = ResourcePreloader.getInstance()
-  
-  // Preconnect to critical domains
-  CRITICAL_RESOURCES.domains.forEach(domain => {
-    preloader.preconnect(domain)
-  })
-  
-  // DNS prefetch
-  CRITICAL_RESOURCES.dnsPrefetch.forEach(domain => {
-    preloader.dnsPrefetch(domain)
-  })
-  
-  // Preload critical fonts
-  CRITICAL_RESOURCES.fonts.forEach(font => {
-    preloader.preloadFont(font)
-  })
-  
-  // Preload critical images
-  if (CRITICAL_RESOURCES.images.length > 0) {
-    try {
-      await preloader.preloadImages(CRITICAL_RESOURCES.images, 'high')
-      console.log('Critical images preloaded successfully')
-    } catch (error) {
-      console.warn('Some critical images failed to preload:', error)
+  try {
+    const preloader = ResourcePreloader.getInstance()
+    
+    // Preconnect to critical domains
+    CRITICAL_RESOURCES.domains.forEach(domain => {
+      try {
+        preloader.preconnect(domain)
+      } catch (error) {
+        console.warn(`Failed to preconnect to ${domain}:`, error)
+      }
+    })
+    
+    // DNS prefetch
+    CRITICAL_RESOURCES.dnsPrefetch.forEach(domain => {
+      try {
+        preloader.dnsPrefetch(domain)
+      } catch (error) {
+        console.warn(`Failed to DNS prefetch ${domain}:`, error)
+      }
+    })
+    
+    // Preload critical fonts
+    CRITICAL_RESOURCES.fonts.forEach(font => {
+      try {
+        preloader.preloadFont(font)
+      } catch (error) {
+        console.warn(`Failed to preload font ${font}:`, error)
+      }
+    })
+    
+    // Preload critical images with timeout
+    if (CRITICAL_RESOURCES.images.length > 0) {
+      try {
+        const imagePromise = preloader.preloadImages(CRITICAL_RESOURCES.images, 'high')
+        const timeoutPromise = new Promise((_, reject) => 
+          setTimeout(() => reject(new Error('Image preload timeout')), 3000)
+        )
+        
+        await Promise.race([imagePromise, timeoutPromise])
+        console.log('Critical images preloaded successfully')
+      } catch (error) {
+        console.warn('Some critical images failed to preload:', error)
+      }
     }
+  } catch (error) {
+    console.error('Critical resources initialization failed:', error)
+    // Don't throw - let the app continue loading
   }
 }

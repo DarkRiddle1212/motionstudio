@@ -2,6 +2,8 @@ import { useState, useEffect, useCallback } from 'react';
 import { AdminLayout } from './';
 import { FadeIn } from '../Animation';
 
+const API_URL = (import.meta as any).env?.VITE_API_URL || 'http://localhost:5001/api';
+
 // Types
 interface SystemConfig {
   id: string;
@@ -441,7 +443,7 @@ const SystemSettings = () => {
   const fetchConfigs = useCallback(async () => {
     try {
       const token = getAdminToken();
-      const response = await fetch('/api/admin/settings/configs', {
+      const response = await fetch('${API_URL}/admin/settings/configs', {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (!response.ok) throw new Error('Failed to fetch configurations');
@@ -462,7 +464,7 @@ const SystemSettings = () => {
   const fetchFeatures = useCallback(async () => {
     try {
       const token = getAdminToken();
-      const response = await fetch('/api/admin/settings/features', {
+      const response = await fetch('${API_URL}/admin/settings/features', {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (!response.ok) throw new Error('Failed to fetch features');
@@ -485,7 +487,7 @@ const SystemSettings = () => {
   const fetchTemplates = useCallback(async () => {
     try {
       const token = getAdminToken();
-      const response = await fetch('/api/admin/settings/email-templates', {
+      const response = await fetch('${API_URL}/admin/settings/email-templates', {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (!response.ok) throw new Error('Failed to fetch templates');
@@ -506,7 +508,7 @@ const SystemSettings = () => {
   const fetchBackups = useCallback(async () => {
     try {
       const token = getAdminToken();
-      const response = await fetch('/api/admin/settings/backups?limit=50', {
+      const response = await fetch('${API_URL}/admin/settings/backups?limit=50', {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (!response.ok) throw new Error('Failed to fetch backups');
@@ -523,7 +525,7 @@ const SystemSettings = () => {
     setSaving(true);
     try {
       const token = getAdminToken();
-      const response = await fetch('/api/admin/settings/configs', {
+      const response = await fetch('${API_URL}/admin/settings/configs', {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -587,7 +589,7 @@ const SystemSettings = () => {
       const token = getAdminToken();
       const url = editingTemplate
         ? `/api/admin/settings/email-templates/${editingTemplate.id}`
-        : '/api/admin/settings/email-templates';
+        : '${API_URL}/admin/settings/email-templates';
       const method = editingTemplate ? 'PUT' : 'POST';
 
       const response = await fetch(url, {
@@ -910,3 +912,4 @@ const SystemSettings = () => {
 };
 
 export default SystemSettings;
+

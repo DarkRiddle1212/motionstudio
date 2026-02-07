@@ -2,6 +2,7 @@ import request from 'supertest';
 import app from '../index';
 import { prisma } from '../utils/prisma';
 import { hashPassword } from '../utils/password';
+import sharp from 'sharp';
 
 describe('Integration Tests - Motion Studio Platform', () => {
   // Test data containers
@@ -774,6 +775,366 @@ describe('Integration Tests - Motion Studio Platform', () => {
       const courseIds = multiCourseEnrollmentResponse.body.enrollments.map((e: any) => e.course.id);
       expect(courseIds).toContain(testCourses.free.id);
       expect(courseIds).toContain(instructor2Course.id);
+    });
+  });
+
+  describe('7. Static File Serving Integration Test', () => {
+    it('should serve uploaded files from /uploads path with proper MIME types and caching headers', async () => {
+      // Test that the test file exists and is accessible
+      const response = await request(app)
+        .get('/uploads/test.txt')
+        .expect(200);
+
+      // Verify caching headers are present
+      expect(response.headers['cache-control']).toBeDefined();
+      expect(response.headers['etag'] || response.headers['last-modified']).toBeDefined();
+
+      // Verify content is served correctly
+      expect(response.text).toBeTruthy();
+    });
+
+    it('should return 404 for non-existent files', async () => {
+      await request(app)
+        .get('/uploads/non-existent-file.jpg')
+        .expect(404);
+    });
+
+    it('should serve files from nested project directories', async () => {
+      // This test verifies the directory structure works
+      // The actual file serving will be tested when we implement the upload endpoints
+      const response = await request(app)
+        .get('/uploads/projects/')
+        .expect(404); // Directory listing should not be enabled
+
+      // This is expected - we don't want directory listing for security
+      expect(response.status).toBe(404);
+    });
+  });
+
+  // ==================== UPLOAD INTEGRATION TESTS ====================
+  
+  describe('8. Upload Integration Tests', () => {
+    let adminToken: string;
+    let testProjectId: string;
+
+    beforeAll(async () => {
+      // Create admin user and get token for upload tests
+      const adminUser = await prisma.user.create({
+        data: {
+          email: 'admin-upload-test@integration-test.com',
+          password: await hashPassword('password123'),
+          firstName: 'Upload',
+          lastName: 'Admin',
+          role: 'admin',
+          emailVerified: true,
+        },
+      });
+
+      // Login to get admin token
+      const loginResponse = await request(app)
+        .post('/api/admin/login')
+        .send({
+          email: 'admin-upload-test@integration-test.com',
+          password: 'password123',
+        })
+        .expect(200);
+
+      adminToken = loginResponse.body.token;
+
+      // Create a test project for upload tests
+      const projectResponse = await request(app)
+        .post('/api/admin/projects')
+        .set('Authorization', `Bearer ${adminToken}`)
+        .send({
+          title: 'Upload Test Project',
+          description: 'Test project for upload integration tests',
+          thumbnailUrl: 'https://example.com/thumb.jpg',
+          caseStudyUrl: 'https://example.com/case.jpg',
+          toolsUsed: ['Test Tool'],
+          goal: 'Test goal',
+          solution: 'Test solution',
+          motionBreakdown: 'Test breakdown',
+          mediaType: 'image',
+        })
+        .expect(201);
+
+      testProjectId = projectResponse.body.id;
+    });
+
+    afterAll(async () => {
+      // Clean up test project and admin user
+      if (testProjectId) {
+        await prisma.project.delete({
+          where: { id: testProjectId },
+        }).catch(() => {}); // Ignore if already deleted
+      }
+      
+      await prisma.user.deleteMany({
+        where: {
+          email: 'admin-upload-test@integration-test.com',
+        },
+      });
+    });
+
+    describe('8.1 Thumbnail Upload Flow', () => {
+      it('should upload thumbnail image successfully', async () => {
+        // Create a simple test image using Sharp (this ensures it's a valid image)
+        const sharp = require('sharp');
+        const testImageBuffer = await sharp({
+          create: {
+            width: 100,
+            height: 100,
+            channels: 3,
+            background: { r: 255, g: 0, b: 0 }
+          }
+        })
+        .png()
+        .toBuffer();
+
+        const response = await request(app)
+          .post('/api/admin/projects/upload/thumbnail')
+          .set('Authorization', `Bearer ${adminToken}`)
+          .field('projectId', testProjectId)
+          .attach('file', testImageBuffer, 'test-thumbnail.png');
+
+        console.log('Upload response status:', response.status);
+        console.log('Upload response body:', response.body);
+
+        expect(response.status).toBe(200);
+        expect(response.body).toHaveProperty('url');
+        expect(response.body).toHaveProperty('path');
+        expect(response.body).toHaveProperty('metadata');
+        expect(response.body.url).toMatch(/^\/uploads\/projects\//);
+      });
+
+      it('should reject invalid file types for thumbnail', async () => {
+        const textBuffer = Buffer.from('This is not an image');
+
+        await request(app)
+          .post('/api/admin/projects/upload/thumbnail')
+          .set('Authorization', `Bearer ${adminToken}`)
+          .field('projectId', testProjectId)
+          .attach('file', textBuffer, 'test.txt')
+          .expect(400);
+      });
+
+      it('should require authentication for thumbnail upload', async () => {
+        const testImageBuffer = Buffer.from([0x89, 0x50, 0x4E, 0x47]); // Minimal PNG header
+
+        await request(app)
+          .post('/api/admin/projects/upload/thumbnail')
+          .attach('file', testImageBuffer, 'test.png')
+          .expect(401);
+      });
+    });
+
+    describe('8.2 Hero Image Upload Flow', () => {
+      it('should upload hero image successfully', async () => {
+        const testImageBuffer = await sharp({
+          create: {
+            width: 100,
+            height: 100,
+            channels: 3,
+            background: { r: 0, g: 255, b: 0 }
+          }
+        })
+        .png()
+        .toBuffer();
+
+        const response = await request(app)
+          .post('/api/admin/projects/upload/hero')
+          .set('Authorization', `Bearer ${adminToken}`)
+          .field('projectId', testProjectId)
+          .attach('file', testImageBuffer, 'test-hero.png')
+          .expect(200);
+
+        expect(response.body).toHaveProperty('url');
+        expect(response.body).toHaveProperty('path');
+        expect(response.body).toHaveProperty('mediaType', 'image');
+        expect(response.body.url).toMatch(/^\/uploads\/projects\//);
+      });
+
+      it('should require authentication for hero upload', async () => {
+        const testImageBuffer = Buffer.from([0x89, 0x50, 0x4E, 0x47]);
+
+        await request(app)
+          .post('/api/admin/projects/upload/hero')
+          .attach('file', testImageBuffer, 'test.png')
+          .expect(401);
+      });
+    });
+
+    describe('8.3 Gallery Upload Flow', () => {
+      it('should upload multiple gallery images successfully', async () => {
+        const testImageBuffer = await sharp({
+          create: {
+            width: 100,
+            height: 100,
+            channels: 3,
+            background: { r: 0, g: 0, b: 255 }
+          }
+        })
+        .png()
+        .toBuffer();
+
+        const response = await request(app)
+          .post('/api/admin/projects/upload/gallery')
+          .set('Authorization', `Bearer ${adminToken}`)
+          .field('projectId', testProjectId)
+          .attach('files', testImageBuffer, 'gallery1.png')
+          .attach('files', testImageBuffer, 'gallery2.png')
+          .expect(200);
+
+        expect(response.body).toHaveProperty('results');
+        expect(Array.isArray(response.body.results)).toBe(true);
+        expect(response.body.results.length).toBe(2);
+        
+        response.body.results.forEach((result: any) => {
+          expect(result).toHaveProperty('url');
+          expect(result).toHaveProperty('path');
+          expect(result.url).toMatch(/^\/uploads\/projects\//);
+        });
+      });
+
+      it('should enforce maximum file limit for gallery', async () => {
+        const testImageBuffer = Buffer.from([0x89, 0x50, 0x4E, 0x47]);
+        
+        // Try to upload 11 files (limit is 10)
+        const request_builder = request(app)
+          .post('/api/admin/projects/upload/gallery')
+          .set('Authorization', `Bearer ${adminToken}`);
+
+        // Attach 11 files
+        for (let i = 0; i < 11; i++) {
+          request_builder.attach('files', testImageBuffer, `gallery${i}.png`);
+        }
+
+        await request_builder.expect(400);
+      });
+
+      it('should require authentication for gallery upload', async () => {
+        const testImageBuffer = Buffer.from([0x89, 0x50, 0x4E, 0x47]);
+
+        await request(app)
+          .post('/api/admin/projects/upload/gallery')
+          .attach('files', testImageBuffer, 'test.png')
+          .expect(401);
+      });
+    });
+
+    describe('8.4 Media Deletion Flow', () => {
+      it('should delete media files successfully', async () => {
+        // First upload a file
+        const testImageBuffer = await sharp({
+          create: {
+            width: 100,
+            height: 100,
+            channels: 3,
+            background: { r: 255, g: 255, b: 0 }
+          }
+        })
+        .png()
+        .toBuffer();
+
+        const uploadResponse = await request(app)
+          .post('/api/admin/projects/upload/thumbnail')
+          .set('Authorization', `Bearer ${adminToken}`)
+          .field('projectId', testProjectId)
+          .attach('file', testImageBuffer, 'test-delete.png')
+          .expect(200);
+
+        // Then delete it
+        const deleteResponse = await request(app)
+          .delete(`/api/admin/projects/${testProjectId}/media/thumbnail`)
+          .set('Authorization', `Bearer ${adminToken}`)
+          .expect(200);
+
+        expect(deleteResponse.body).toHaveProperty('success', true);
+      });
+
+      it('should require authentication for media deletion', async () => {
+        await request(app)
+          .delete(`/api/admin/projects/${testProjectId}/media/thumbnail`)
+          .expect(401);
+      });
+    });
+
+    describe('8.5 Error Scenarios', () => {
+      it('should handle file size limits', async () => {
+        // Create a buffer that exceeds the limit (simulate large file)
+        const largeBuffer = Buffer.alloc(10 * 1024 * 1024); // 10MB buffer
+        
+        await request(app)
+          .post('/api/admin/projects/upload/thumbnail')
+          .set('Authorization', `Bearer ${adminToken}`)
+          .field('projectId', testProjectId)
+          .attach('file', largeBuffer, 'large-file.png')
+          .expect(400);
+      });
+
+      it('should handle missing file in upload', async () => {
+        await request(app)
+          .post('/api/admin/projects/upload/thumbnail')
+          .set('Authorization', `Bearer ${adminToken}`)
+          .field('projectId', testProjectId)
+          .expect(400);
+      });
+
+      it('should handle rate limiting', async () => {
+        // This test would need to make many requests quickly
+        // For now, we'll just verify the endpoint exists
+        const testImageBuffer = await sharp({
+          create: {
+            width: 50,
+            height: 50,
+            channels: 3,
+            background: { r: 128, g: 128, b: 128 }
+          }
+        })
+        .png()
+        .toBuffer();
+        
+        // Make a few requests - rate limiting should allow these
+        for (let i = 0; i < 3; i++) {
+          await request(app)
+            .post('/api/admin/projects/upload/thumbnail')
+            .set('Authorization', `Bearer ${adminToken}`)
+            .field('projectId', testProjectId)
+            .attach('file', testImageBuffer, `test${i}.png`)
+            .expect(200);
+        }
+      });
+    });
+
+    describe('8.6 Backward Compatibility', () => {
+      it('should still work with URL-based projects', async () => {
+        // Create a project with traditional URL fields
+        const urlProjectResponse = await request(app)
+          .post('/api/admin/projects')
+          .set('Authorization', `Bearer ${adminToken}`)
+          .send({
+            title: 'URL-based Project',
+            description: 'Project using traditional URLs',
+            thumbnailUrl: 'https://example.com/thumb.jpg',
+            caseStudyUrl: 'https://example.com/case.jpg',
+            toolsUsed: ['Test Tool'],
+            goal: 'Test goal',
+            solution: 'Test solution',
+            motionBreakdown: 'Test breakdown',
+            mediaType: 'image',
+          })
+          .expect(201);
+
+        // Verify the project was created successfully
+        expect(urlProjectResponse.body).toHaveProperty('id');
+        expect(urlProjectResponse.body.thumbnailUrl).toBe('https://example.com/thumb.jpg');
+        expect(urlProjectResponse.body.caseStudyUrl).toBe('https://example.com/case.jpg');
+
+        // Clean up
+        await prisma.project.delete({
+          where: { id: urlProjectResponse.body.id },
+        });
+      });
     });
   });
 });

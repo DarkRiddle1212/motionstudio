@@ -131,7 +131,7 @@ const CourseManagement = () => {
         params.append('sortOrder', sorting.direction || 'desc');
       }
 
-      const response = await fetch(`${API_URL}/api/admin/courses?${params}`, {
+      const response = await fetch(`${API_URL}/admin/courses?${params}`, {
         headers: {
           'Authorization': `Bearer ${token}`,
         },
@@ -164,7 +164,7 @@ const CourseManagement = () => {
     setDetailLoading(true);
 
     try {
-      const response = await fetch(`${API_URL}/api/admin/courses/${courseId}`, {
+      const response = await fetch(`${API_URL}/admin/courses/${courseId}`, {
         headers: {
           'Authorization': `Bearer ${token}`,
         },
@@ -210,7 +210,7 @@ const CourseManagement = () => {
     if (!token) return;
     
     const courseIds = selectedCourses.map(c => c.id);
-    await fetch(`${API_URL}/api/admin/courses/bulk/publish`, {
+    await fetch(`${API_URL}/admin/courses/bulk/publish`, {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${token}`,
@@ -226,7 +226,7 @@ const CourseManagement = () => {
     if (!token) return;
     
     const courseIds = selectedCourses.map(c => c.id);
-    await fetch(`${API_URL}/api/admin/courses/bulk/publish`, {
+    await fetch(`${API_URL}/admin/courses/bulk/publish`, {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${token}`,
@@ -242,7 +242,7 @@ const CourseManagement = () => {
     if (!token) return;
     
     const courseIds = selectedCourses.map(c => c.id);
-    await fetch(`${API_URL}/api/admin/courses/bulk/delete`, {
+    await fetch(`${API_URL}/admin/courses/bulk/delete`, {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${token}`,
@@ -258,7 +258,7 @@ const CourseManagement = () => {
     if (!token) return;
     
     try {
-      const response = await fetch(`${API_URL}/api/admin/courses/${course.id}/publish`, {
+      const response = await fetch(`${API_URL}/admin/courses/${course.id}/publish`, {
         method: 'PATCH',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -786,3 +786,4 @@ const CourseDetailModal = ({ course, loading, onClose, onPublishToggle }: Course
 };
 
 export default CourseManagement;
+

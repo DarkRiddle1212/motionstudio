@@ -88,7 +88,7 @@ const ScholarshipManagement = () => {
     if (!token) return;
     
     try {
-      const response = await fetch(`${API_URL}/api/admin/scholarships/stats`, {
+      const response = await fetch(`${API_URL}/admin/scholarships/stats`, {
         headers: { 'Authorization': `Bearer ${token}` },
       });
       if (response.ok) {
@@ -118,7 +118,7 @@ const ScholarshipManagement = () => {
         params.append('sortOrder', sorting.direction || 'desc');
       }
 
-      const response = await fetch(`${API_URL}/api/admin/scholarships?${params}`, {
+      const response = await fetch(`${API_URL}/admin/scholarships?${params}`, {
         headers: { 'Authorization': `Bearer ${token}` },
       });
 
@@ -173,7 +173,7 @@ const ScholarshipManagement = () => {
     }
 
     try {
-      const response = await fetch(`${API_URL}/api/admin/scholarships/${scholarshipId}/revoke`, {
+      const response = await fetch(`${API_URL}/admin/scholarships/${scholarshipId}/revoke`, {
         method: 'POST',
         headers: { 'Authorization': `Bearer ${token}` },
       });
@@ -503,7 +503,7 @@ const CreateScholarshipModal = ({ onClose, onSuccess, token }: CreateScholarship
         if (studentSearch) params.append('search', studentSearch);
         if (formData.courseId) params.append('courseId', formData.courseId);
         
-        const response = await fetch(`${API_URL}/api/admin/scholarships/eligible/students?${params}`, {
+        const response = await fetch(`${API_URL}/admin/scholarships/eligible/students?${params}`, {
           headers: { 'Authorization': `Bearer ${token}` },
         });
         if (response.ok) {
@@ -525,7 +525,7 @@ const CreateScholarshipModal = ({ onClose, onSuccess, token }: CreateScholarship
         const params = new URLSearchParams();
         if (courseSearch) params.append('search', courseSearch);
         
-        const response = await fetch(`${API_URL}/api/admin/scholarships/available/courses?${params}`, {
+        const response = await fetch(`${API_URL}/admin/scholarships/available/courses?${params}`, {
           headers: { 'Authorization': `Bearer ${token}` },
         });
         if (response.ok) {
@@ -547,7 +547,7 @@ const CreateScholarshipModal = ({ onClose, onSuccess, token }: CreateScholarship
     setError(null);
 
     try {
-      const response = await fetch(`${API_URL}/api/admin/scholarships`, {
+      const response = await fetch(`${API_URL}/admin/scholarships`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -737,7 +737,7 @@ const ManualEnrollmentModal = ({ onClose, onSuccess, token }: ManualEnrollmentMo
         const params = new URLSearchParams();
         if (studentSearch) params.append('search', studentSearch);
         
-        const response = await fetch(`${API_URL}/api/admin/scholarships/eligible/students?${params}`, {
+        const response = await fetch(`${API_URL}/admin/scholarships/eligible/students?${params}`, {
           headers: { 'Authorization': `Bearer ${token}` },
         });
         if (response.ok) {
@@ -759,7 +759,7 @@ const ManualEnrollmentModal = ({ onClose, onSuccess, token }: ManualEnrollmentMo
         const params = new URLSearchParams();
         if (courseSearch) params.append('search', courseSearch);
         
-        const response = await fetch(`${API_URL}/api/admin/scholarships/available/courses?${params}`, {
+        const response = await fetch(`${API_URL}/admin/scholarships/available/courses?${params}`, {
           headers: { 'Authorization': `Bearer ${token}` },
         });
         if (response.ok) {
@@ -781,7 +781,7 @@ const ManualEnrollmentModal = ({ onClose, onSuccess, token }: ManualEnrollmentMo
     setError(null);
 
     try {
-      const response = await fetch(`${API_URL}/api/admin/enrollments/manual`, {
+      const response = await fetch(`${API_URL}/admin/enrollments/manual`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -1002,3 +1002,4 @@ const ScholarshipDetailModal = ({ scholarship, onClose, onRevoke }: ScholarshipD
 };
 
 export default ScholarshipManagement;
+

@@ -6,6 +6,8 @@ import { Input } from '../Common/Input';
 import { Select } from '../Common/Select';
 import { Badge } from '../Common/Badge';
 
+const API_URL = (import.meta as any).env?.VITE_API_URL || 'http://localhost:5001/api';
+
 interface ScheduledOperation {
   id: string;
   type: 'bulk_user' | 'bulk_course' | 'data_export';
@@ -37,7 +39,7 @@ const ScheduledOperations: React.FC<ScheduledOperationsProps> = ({ className = '
   const fetchOperations = useCallback(async () => {
     setIsLoading(true);
     try {
-      const response = await fetch('/api/admin/bulk-operations?type=scheduled', {
+      const response = await fetch('${API_URL}/admin/bulk-operations?type=scheduled', {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('adminToken')}`
         }
@@ -69,7 +71,7 @@ const ScheduledOperations: React.FC<ScheduledOperationsProps> = ({ className = '
 
     setIsScheduling(true);
     try {
-      const response = await fetch('/api/admin/bulk-operations', {
+      const response = await fetch('${API_URL}/admin/bulk-operations', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
