@@ -49,7 +49,7 @@ const TailwindTest = lazy(() => import('./components/Test/TailwindTest'))
 
 // Optimized loading component with better UX
 const LoadingSpinner = () => (
-  LoadingState 
+  <LoadingState 
     message="Loading application..."
     size="lg"
     fullScreen
