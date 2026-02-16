@@ -20,6 +20,8 @@ backend/coverage
 frontend/coverage
 *.test.ts
 *.test.tsx
+*.backup.tsx
+*.backup.ts
 __tests__
 .kiro
 .qodo
